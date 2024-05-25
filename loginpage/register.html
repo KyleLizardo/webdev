@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <!-- Required meta tags -->
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet"
+        integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">
+    <link rel="stylesheet" href="userr.css">
+    <script src="/loginpage/userr.js" defer></script>
+
+
+    <title>Bayanihan</title>
+</head>
+
+<body>
+    <form id="MainForm" class="w-25 m-4">
+        <h2>Register User</h2>
+        <div class="form-floating mb-3">
+            <input type="text" class="form-control" id="fnameInp" placeholder="Enter First Name" required>
+            <label for="fnameInp">First Name</label>
+        </div>
+
+        <div class="form-floating mb-3">
+            <input type="text" class="form-control" id="lnameInp" placeholder="Enter Last Name" required>
+            <label for="lnameInp">Last Name</label>
+        </div>
+
+        <div class="form-floating mb-3">
+            <input type="date" class="form-control" id="bdateInp" placeholder="Enter Date of Birth" required>
+            <label for="bdateInp">Date of Birth</label>
+        </div>
+
+        <div class="form-floating mb-3">
+            <select class="form-select" id="genderInp" aria-label="Floating label select example" required>
+                <option value="" disabled selected hidden></option> <!-- will not show from the option list -->
+                <option value="1">Male</option>
+                <option value="2">Female</option>
+                <option value="3">Other</option>
+            </select>
+            <label for="genderInp">Select Gender</label>
+        </div>
+
+        <div class="form-floating mb-3">
+            <input type="tel" class="form-control" id="contactInp" placeholder="Contact Number"
+                oninput="formatPhoneNumber(event)" required>
+            <label for="contactInp">Mobile Number</label>
+
+        </div>
+
+        <div class="form-floating mb-3">
+            <input type="email" class="form-control" id="emailInp" placeholder="name@example.com" required>
+            <label for="emailInp">Email Address</label>
+        </div>
+
+        <div class="form-floating mb-3">
+            <input type="password" class="form-control" id="passwordInp" placeholder="Password" required>
+            <label for="passwordInp">Password</label>
+        </div>
+
+        <button type="submit" class="btn btn-primary">Submit</button>
+        <a href="login.html"> <button type="button" class="btn btn-primary me-2">Sign in</button> </a>
+        <!-- me-2 margin end-->
+
+    </form>
+
+
+    <!-- Optional JavaScript; choose one of the two! -->
+
+    <!-- Option 1: Bootstrap Bundle with Popper -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js"
+        integrity="sha384-MrcW6ZMFYlzcLA8Nl+NtUVF0sA7MsXsP1UyJoMp4YLEuNSfAP+JcXn/tWtIaxVXM"
+        crossorigin="anonymous"></script>
+
+    <script type="module">
+        // Import the functions you need from the SDKs you need
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.1/firebase-app.js";
+        import { getDatabase, set, ref } from "https://www.gstatic.com/firebasejs/10.12.1/firebase-database.js";
+        import { getAuth, createUserWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.12.1/firebase-auth.js";
+
+        import { getAnalytics } from "https://www.gstatic.com/firebasejs/10.12.1/firebase-analytics.js";
+
+        // Your web app's Firebase configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyCiEZsjiaintF14Y0MB0lOjYCJRnIV8jqA",
+            authDomain: "community-27dcf.firebaseapp.com",
+            projectId: "community-27dcf",
+            storageBucket: "community-27dcf.appspot.com",
+            messagingSenderId: "888962297245",
+            appId: "1:888962297245:web:1d3fe7d6f9b211526d9374",
+            measurementId: "G-FP14CRMLTB"
+        };
+
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const db = getDatabase();
+        const auth = getAuth(app);
+
+        // Get references to the input fields
+        const FnameInp = document.getElementById('fnameInp');
+        const lnameInp = document.getElementById('lnameInp');
+        const BdateInp = document.getElementById('bdateInp');
+        const GenderInp = document.getElementById('genderInp');
+        const ContactInp = document.getElementById('contactInp');
+        const EmailInp = document.getElementById('emailInp');
+        const PassInp = document.getElementById('passwordInp');
+
+        // Function to handle "form submission"
+        const RegisterUser = evt => {
+            evt.preventDefault(); // Prevent any default behavior
+
+            createUserWithEmailAndPassword(auth, EmailInp.value, PassInp.value)
+                .then(credentials => {
+                    const user = credentials.user;
+                    //'users/' is a string that represents a path or key in the Firebase Realtime Database where user data will be stored.
+                    //user.uid is a unique identifier for the user. This uid is automatically generated by Firebase Authentication when a new user is created.
+                    set(ref(db, 'users/' + user.uid), {  //their additional profile information is stored in the Firebase Realtime Database (BTW create realtime databaase)
+                        firstName: FnameInp.value,
+                        lastName: lnameInp.value,
+                        birthDate: BdateInp.value,
+                        gender: GenderInp.value,
+                        contact: ContactInp.value,
+                        email: EmailInp.value
+                    });
+                    alert("User registered successfully!");
+                })
+                .catch(error => {
+                    alert(error.message);
+                    console.log(error.code);
+                    console.log(error.message);
+                });
+        };
+
+
+        // Add event listener to the form id - MainForm
+        document.getElementById('MainForm').addEventListener('submit', RegisterUser);
+
+        const analytics = getAnalytics(app);
+    </script>
+
+
+
+
+
+    <!-- Option 2: Separate Popper and Bootstrap JS -->
+    <!--
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.2/dist/umd/popper.min.js" integrity="sha384-IQsoLXl5PILFhosVNubq5LC7Qb9DXgDA9i+tQ8Zj3iwWAwPtgFTxbJ8NT4GN1R8p" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.min.js" integrity="sha384-cVKIPhGWiC2Al4u+LWgxfKTRIcfu0JTxR+EQDz/bgldoEyl4H0zUF0QKbrJ0EcQF" crossorigin="anonymous"></script>
+    -->
+</body>
+
+</html>

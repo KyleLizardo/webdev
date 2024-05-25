@@ -1,0 +1,211 @@
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    scroll-behavior: smooth;
+}
+
+:root {
+    --primary-color: hsl(210, 61%, 40%);
+}
+
+body {
+    font-family: Helvetica, Arial, sans-serif;
+    background-color: white;
+}
+
+.primary-header {
+    background-color: rgba(255, 255, 255, 0);
+    padding: 1rem;
+    position: fixed;
+    width: 100%;
+    height: auto;
+    top: 0;
+    z-index: 1000;
+    transition: background-color 250ms;
+}
+
+.primary-header.sticking {
+    background-color: var(--primary-color);
+}
+
+.logo_container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.logo {
+    width: 3rem;
+    height: auto;
+}
+
+.primary-header_inner {
+    padding: 0 3rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.nav-list {
+    font-size: larger;
+    list-style: none;
+    display: flex;
+    gap: 1rem;
+}
+
+.nav-list a {
+    text-decoration: none;
+    color: white;
+    padding: 1rem;
+    transition: color 250ms;
+}
+
+.nav-list a:hover {
+    color: #bfbfbf;
+}
+
+.nav-list a.active {
+    color: black;
+}
+
+.nav-list a[href="#"]:not(:target) {
+    color: white;
+}
+
+.nav-list li {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.bayanihan-bg_container {
+    width: 100%;
+    height: 100vh;
+    background: url(BAYANIHAN_BG.png) no-repeat center center/cover;
+}
+
+.BHLU-container {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+    height: 100vh;
+    padding: 10rem 1rem;
+    text-align: center;
+}
+
+.BHLU-logo_container {
+    margin-bottom: 2rem;
+}
+
+.BHLU-logo {
+    width: 100%;
+    height: auto;
+}
+
+.BHLU-desc_container {
+    max-width: 60%;
+}
+
+.BHLU-desc {
+    font-size: larger;
+    line-height: 1.5;
+}
+
+.Features_container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 5rem 1rem;
+    width: 100%;
+    height: 100vh;
+    background: url(BLUE\ BG.png) no-repeat center center/cover;
+}
+
+.Features-grid_container {
+    display: grid;
+    gap: 1rem;
+    grid-template-columns: repeat(auto-fit, minmax(20%, 1fr));
+    width: 100%;
+    max-width: 1200px;
+}
+
+.Features-grid {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    background-color: #ffffff;
+    padding: 1rem;
+    border-radius: 8px;
+    box-shadow: black;
+}
+
+
+.Fflex {
+    width: 100%;
+    height: auto;
+    margin-bottom: 1rem;
+}
+
+.Objectives_container {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+    height: 100vh;
+    padding: 10rem 1rem;
+    text-align: center;
+}
+
+.Objectives-grid_container {
+    display: grid;
+    gap: 2rem;
+    grid-template-columns: repeat(4, 1fr);
+    width: 100%;
+    max-width: 1200px;
+}
+
+.Objectives-grid {
+    display: flex;
+    align-items: center;
+    padding: 1rem;
+    border-radius: 8px;
+    box-shadow: 0 4px 6px ;
+    text-align: left;
+}
+
+/* Positioning specific grid items */
+.Objectives-grid:nth-child(1) {
+    grid-column: span 2;
+}
+
+.Objectives-grid:nth-child(2) {
+    grid-column: span 2;
+}
+
+.Objectives-grid:nth-child(3) {
+    grid-column: span 2;
+}
+
+.Objectives-grid:nth-child(4) {
+    grid-column: span 2;
+}
+
+.Objectives-grid:nth-child(5) {
+    grid-column: 2 / span 2;
+}
+
+.Oflex {
+    width: 50px;
+    height: 50px;
+    object-fit: cover;
+    margin-right: 1rem;
+}
+
+.Objectives-grid p {
+    padding: 1rem;
+}
