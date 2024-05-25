@@ -75,9 +75,9 @@
           get(child(dbref, 'users/' + credentials.user.uid)).then((snaphot) => {
             if (snaphot.exists) {
               //you can use the local storage if you want a user to permanently login
-              sessionStorage.setItem("user-info,", JSON.stringify({ //stringify means that object will get converted into a string // will saving into the session storage
-                firstname: snaphot.val().firstname,
-                lastname: snaphot.val().lastname
+              sessionStorage.setItem("user-info", JSON.stringify({ //stringify means that object will get converted into a string // will saving into the session storage
+                firstName: snaphot.val().firstName,
+                lastName: snaphot.val().lastName
 
               }))
               sessionStorage.setItem("user-creds", JSON.stringify(credentials.user));
