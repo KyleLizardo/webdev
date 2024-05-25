@@ -76,7 +76,7 @@
 
         let CheckCred = ()=> {
     if (!sessionStorage.getItem("user-cred")) //checks if it is not null or undefined
-        window.location.href = '../index.html';
+        window.location.href = '../loginpage/login.html';
 
     else{
         MsgHead.innerText = `user with email "${UserCreds.email}" logged in`;
