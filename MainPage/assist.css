@@ -90,7 +90,7 @@ nav .checkbox i {
     padding: .5rem 1rem;
     text-decoration: none;
     font-weight: 600;
-    font-size: 2rem;
+    font-size: 1.5rem;
     color: white;
     transition: left 0.3s;
 }
@@ -120,41 +120,33 @@ section {
     
 }
 
-.title-input {  
-    margin-bottom: 1rem;
-    background-color: #dfdfdfdd;
-    color: #0e0e0ef8;
-    padding: 1em;
-    border-radius: 10px;
+.title-input, .textarea {
     border: 0.5px solid transparent;
-    outline: none; /* when on click border outline will not appear */
-    font-family: sans-serif;
+    border-radius: 10px;
+    background-color: #dfdfdfdd;
+    color: #0e0e0ef8;   
     font-weight: 10000;
     font-size: 1.5rem;
     line-height: 1.4;
     width: 100%;
+}
+
+.title-input {  
+    margin-bottom: 1rem;
+   padding: 1em;
+    outline: none; /* when on click border outline will not appear */
+    font-family: sans-serif;
     height: 2rem;
     transition: all 0.2s;
 }
 
 
-.textarea {  
-    background-color: #dfdfdfdd;
-    color: #0e0e0ef8;
-    padding: 1rem 3.5rem 1rem 1rem; /**  top right bottom left **/
-    border-radius: 10px;
-    border: 0.5px solid transparent;
+.textarea {    
+    padding: 1rem 3.5rem 1rem 1rem; /**  top right bottom left **/    
     outline: none; /* when on click border outline will not appear */
-    font-family: sans-serif;
-    font-weight: 10000;
-    font-size: 1.5rem;
-    line-height: 1.4;
-    width: 100%;
+    font-family: sans-serif;   
     height: 6rem;
-    transition: all 0.2s;
-
-
-   
+    transition: all 0.2s;   
 }
 
 .textarea:hover {
@@ -180,15 +172,7 @@ color: red;
 #file {
     font-size: 2rem;
     cursor: pointer;
-    right: 0;
-    bottom: 0;
-    position: absolute;
     color: #1f2937;
-    display: flex;
-    justify-content: center;
-    margin-right:60px;
-    margin-bottom: 35px;
-
   }
 
 #personal-container {
