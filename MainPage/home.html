@@ -10,7 +10,7 @@
     <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
 
 
-
+    <script src="assist.js" defer></script>
     <title>Hello, world!</title>
 </head>
 
@@ -19,28 +19,41 @@
         <div class="nav_content">
             <div class="logo"><a href="#"> <img class="BHLU-logo" src="/LOGO1.png" alt="BHLU Logo"></a></div>
 
-
             <label for="check" class="checkbox">
                 <!-- italic <i> -->
                 <i class="ri-menu-line"></i>
             </label>
             <input type="checkbox" name="check" id="check">
 
-
             <!-- unordered list-->
             <ul>
-
                 <li> <a href="#"><i class="ri-thumb-up-line"></i></a></li>
-                <li> <a href="#"><i class="ri-service-line"></i></a></li>
+                <li> <a href="#personal-container"><i class="ri-service-line"></i></a></li>
                 <li> <a id="signoutbtn">Sign Out</a></li>
             </ul>
 
         </div>
     </nav>
-<BR><BR> <BR><BR> <BR>
 
-    <h2 id="msg"></h2>
-    <h2 id="greet"></h2>
+    <!-- main-->
+    <main>
+        <section id="form-container">
+            <div id="message-container">
+                <i id="close" class="ri-close-line btn" style="display: none;"></i> 
+                <input type="text" id="title-input" class="title-input" placeholder="Enter title" style="display: none;">
+                <textarea id="request-textarea" class="textarea" placeholder="Enter your request..."></textarea>
+            </div>
+        </section>
+
+        <section id="personal-container">
+            <div>
+                <h2 id="msg"></h2>
+                <h2 id="greet"></h2>
+                Hello
+            </div>
+        </section>
+    </main>
+
 
     <script>
         let UserCreds = JSON.parse(sessionStorage.getItem("user-creds"));

@@ -7,12 +7,11 @@
 
 :root {
     --primary-color: hsl(210, 61%, 40%);
-  /** --max-width: 1200px; **/
-  --max-width: 100%;
-  --secondary-color: #ff8d30;
-  --text-dark: #1f2937;
-  --text-light: #6b7280;
-  --extra-light: #f5f5f5;
+    --max-width: 100%;
+    --secondary-color: #ff8d30;
+    --text-dark: #1f2937;
+    --text-light: #6b7280;
+    --extra-light: #f5f5f5;
 }
 
 a {
@@ -28,8 +27,8 @@ nav {
     position: fixed;
     top: 0;
     left: 0;
-    background-color: var(--primary-color-dark); /* for browsers that do not support gradient*/
-    background-image: linear-gradient(90deg, rgba(0,212,255,1), rgba(119,69,210,1) );
+    background-color: var(--primary-color-dark); /* for browsers that do not support gradient */
+    background-image: linear-gradient(90deg, rgba(0,212,255,1), rgba(119,69,210,1));
     z-index: 0;
 }
 
@@ -43,12 +42,10 @@ nav {
 }
 
 .nav_content .logo {
- 
     display: inline-block;
 }
 
 .nav_content .logo a {
-
     font-size: 1.5rem;
     font-weight: 600;
     color: var(--primary-color);
@@ -58,7 +55,6 @@ nav {
 .nav_content .logo a img {
     width: 3rem;
     height: 3rem;
-
 }
 
 nav .logo a:hover {
@@ -79,61 +75,121 @@ nav .checkbox i {
     cursor: pointer;
 }
 
-.nav_content  ul {
+.nav_content ul {
     display: flex;
     align-items: center;
     gap: 1rem;
     list-style: none;
     transition: left 0.3s;
-    margin: 0 auto; /* Center the ul within the nav  top right bottom left*/ 
+    margin: 0 auto; /* Center the ul within the nav  top right bottom left */
 }
 
 .nav_content ul li a {
     border: solid transparent; 
-    /** padding is top/bottom, right/left   **/  
-    padding: .5rem 1rem;  
+    padding: .5rem 1rem;
     text-decoration: none;
     font-weight: 600;
     font-size: 2rem;
     color: white;
-    transition:left 0.3s;
-    }
-    ul li a:hover{
+    transition: left 0.3s;
+}
 
-        border-bottom-color: var(--secondary-color);
-        color: var(--secondary-color);
-        }
+ul li a:hover {
+    border-bottom-color: var(--secondary-color);
+    color: var(--secondary-color);
+}
+
 #signoutbtn {
-cursor: pointer;
+    cursor: pointer;
+}    
 
-}       
+section {
+    min-height: 100vh;
+    background-color: var(--extra-light);
+}
+
+#message-container {
+    min-width: 30rem;
+    max-width: 90rem; /* Adjusted to be larger than min-width */
+    width: 100%; /* Ensures it is responsive within the allowed range */
+    padding-left: 2rem;
+    padding-right: 2rem;
+    margin: auto; /* Centers the container */
+    padding-top: 100px;
+    
+}
+
+.textarea {  
+    background-color: #dfdfdfdd;
+    color: #0e0e0ef8;
+    padding: 1em;
+    border-radius: 10px;
+    border: 0.5px solid transparent;
+    outline: none; /* when on click border outline will not appear */
+    font-family: sans-serif;
+    font-weight: 10000;
+    font-size: 1.5rem;
+    line-height: 1.4;
+    width: 100%;
+    height: 7.5rem;
+    transition: all 0.2s;
+   
+}
+
+.title-input {  
+    margin-bottom: 1rem;
+    background-color: #dfdfdfdd;
+    color: #0e0e0ef8;
+    padding: 1em;
+    border-radius: 10px;
+    border: 0.5px solid transparent;
+    outline: none; /* when on click border outline will not appear */
+    font-family: sans-serif;
+    font-weight: 10000;
+    font-size: 1.5rem;
+    line-height: 1.4;
+    width: 100%;
+    height: 2rem;
+    transition: all 0.2s;
+}
+
+
+.textarea:hover {
+    cursor: pointer;
+    background-color: #eeeeee;
+}
+
+.textarea:focus {
+    cursor: text;
+}
+#close:hover {
+cursor: pointer;    
+color: red;
+}
+
+#personal-container {
+    background-color: #1f2937;
+}
 
 @media (width < 750px) {
     nav .checkbox {
-      display: flex;
-      justify-content: end;      
-
-      ;
+        display: flex;
+        justify-content: end;
     }
 
     ul {
         position: absolute;
         width: 100%;
-        height: calc(100vh - 73px); /**height of the navbar - to viewport**/
-        left: -100%;  /** left hides content**/
+        height: calc(100vh - 73px); /* height of the navbar - to viewport */
+        left: -100%; /* left hides content */
         top: 73px;
         background-color: var(--primary-color);
         flex-direction: column;
         justify-content: center;
         gap: 3rem;
-      }
+    }
 
-      nav #check:checked ~ ul {
+    nav #check:checked ~ ul {
         left: 0;
-      }
-    
-
-
+    }
 }
-    
-    
