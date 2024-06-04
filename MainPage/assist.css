@@ -7,6 +7,7 @@
 
 :root {
     --primary-color: hsl(210, 61%, 40%);
+    --primary-light: hsl(184, 84%, 51%);
     --max-width: 100%;
     --secondary-color: #ff8d30;
     --text-dark: #1f2937;
@@ -95,8 +96,8 @@ nav .checkbox i {
 }
 
 ul li a:hover {
-    border-bottom-color: var(--secondary-color);
-    color: var(--secondary-color);
+    border-bottom-color: var(--primary-light);
+    color: var(--primary-light);
 }
 
 #signoutbtn {
@@ -108,32 +109,15 @@ section {
     background-color: var(--extra-light);
 }
 
-#message-container {
+#message-container { 
     min-width: 30rem;
     max-width: 90rem; /* Adjusted to be larger than min-width */
     width: 100%; /* Ensures it is responsive within the allowed range */
-    padding-left: 2rem;
-    padding-right: 2rem;
-    margin: auto; /* Centers the container */
+    height: 99; 
+    margin: auto; /* Centers the container */    
     padding-top: 100px;
+  
     
-}
-
-.textarea {  
-    background-color: #dfdfdfdd;
-    color: #0e0e0ef8;
-    padding: 1em;
-    border-radius: 10px;
-    border: 0.5px solid transparent;
-    outline: none; /* when on click border outline will not appear */
-    font-family: sans-serif;
-    font-weight: 10000;
-    font-size: 1.5rem;
-    line-height: 1.4;
-    width: 100%;
-    height: 7.5rem;
-    transition: all 0.2s;
-   
 }
 
 .title-input {  
@@ -154,6 +138,25 @@ section {
 }
 
 
+.textarea {  
+    background-color: #dfdfdfdd;
+    color: #0e0e0ef8;
+    padding: 1rem 3.5rem 1rem 1rem; /**  top right bottom left **/
+    border-radius: 10px;
+    border: 0.5px solid transparent;
+    outline: none; /* when on click border outline will not appear */
+    font-family: sans-serif;
+    font-weight: 10000;
+    font-size: 1.5rem;
+    line-height: 1.4;
+    width: 100%;
+    height: 6rem;
+    transition: all 0.2s;
+
+
+   
+}
+
 .textarea:hover {
     cursor: pointer;
     background-color: #eeeeee;
@@ -162,10 +165,31 @@ section {
 .textarea:focus {
     cursor: text;
 }
+
+#close {
+background-color: #cbe1ff;    
+width: 1rem;
+}
+
 #close:hover {
 cursor: pointer;    
 color: red;
 }
+
+
+#file {
+    font-size: 2rem;
+    cursor: pointer;
+    right: 0;
+    bottom: 0;
+    position: absolute;
+    color: #1f2937;
+    display: flex;
+    justify-content: center;
+    margin-right:60px;
+    margin-bottom: 35px;
+
+  }
 
 #personal-container {
     background-color: #1f2937;
