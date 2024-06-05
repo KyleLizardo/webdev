@@ -42,10 +42,6 @@ nav {
     justify-content: space-between; /* Space between logo and nav items */
 }
 
-.nav_content .logo {
-    display: inline-block;
-}
-
 .nav_content .logo a {
     font-size: 1.5rem;
     font-weight: 600;
@@ -107,15 +103,16 @@ ul li a:hover {
 section {
     min-height: 100vh;
     background-color: var(--extra-light);
+    margin: 1rem;
 }
 
 #message-container { 
     min-width: 30rem;
     max-width: 90rem; /* Adjusted to be larger than min-width */
     width: 100%; /* Ensures it is responsive within the allowed range */
-    height: 99; 
+  
     margin: auto; /* Centers the container */    
-    padding-top: 100px;
+    padding-top: 80px;
   
     
 }
@@ -129,9 +126,12 @@ section {
     font-size: 1.5rem;
     line-height: 1.4;
     width: 100%;
+    resize: none;
 }
 
 .title-input {  
+
+    font-weight: bolder;
     margin-bottom: 1rem;
    padding: 1em;
     outline: none; /* when on click border outline will not appear */
@@ -158,9 +158,17 @@ section {
     cursor: text;
 }
 
+.below-subj{
+    display: flex;
+    justify-content: space-between;
+    height: 2.5rem;
+    margin-top: 5px;
+}
+
 #close {
+color: #1f2937;
 background-color: #cbe1ff;    
-width: 1rem;
+width: 1.5rem;
 }
 
 #close:hover {
@@ -168,16 +176,26 @@ cursor: pointer;
 color: red;
 }
 
+.btn {
+    
+    width: 5rem;
+    padding: 5px;
+    font-size: 15px;
+    background-color: cornflowerblue;
+    border: none;
+    color: white;
+    border-radius: 10px;
+    cursor: pointer;
+    
 
+}
 #file {
     font-size: 2rem;
     cursor: pointer;
     color: #1f2937;
   }
 
-#personal-container {
-    background-color: #1f2937;
-}
+
 
 @media (width < 750px) {
     nav .checkbox {

@@ -1,46 +1,95 @@
+document.addEventListener('DOMContentLoaded', () => {
+  let UserCreds = JSON.parse(sessionStorage.getItem("user-creds"));
+  let UserInfo = JSON.parse(sessionStorage.getItem("user-info"));
 
+  let MsgHead = document.getElementById('msg');
+  let GreetHead = document.getElementById('greet');
+  let SignoutBtn = document.getElementById('signoutbtn');
 
-// Show the title input when the textarea is focused
-document.getElementById('request-textarea').addEventListener('focus', () => {
-    document.getElementById('title-input').style.display = 'block'; // Removed space between 9 and rem
-    document.getElementById('close').style.display = 'block';
+  let Signout = () => {
+      sessionStorage.removeItem("user-creds");
+      sessionStorage.removeItem("user-info");
+      window.location.href = '../loginpage/login.html';
+  }
 
+let CheckCred = () => {
+      if (!sessionStorage.getItem("user-creds")) {
+          window.location.href = '../loginpage/login.html';
+      } 
+      
+  /**    else {
+          MsgHead.innerText = `User with email "${UserCreds.email}" logged in`;
+          GreetHead.innerText = `Welcome "${UserInfo.firstName} ${UserInfo.lastName}!"`;
+      } **/
+  } 
 
-    this.style.overflow = 'hidden'; 
+  window.addEventListener('DOMContentLoaded', CheckCred);
+  SignoutBtn.addEventListener('click', Signout);
 
-});
-
-
-// Toggle the visibility of the title input when clicking the close button
-document.getElementById('close').addEventListener('click', () => {
-    const titleInput = document.getElementById('title-input');
-    titleInput.style.display = titleInput.style.display === 'none' ? 'block' : 'none';
-    document.getElementById('request-textarea').style.height = '6rem';
-    document.getElementById('close').style.display = 'none';
-    
-    document.getElementById('file').style.marginBottom = '35px';
-
-  
-
-});
-
-const requestTextarea = document.getElementById('request-textarea');
-
-requestTextarea.addEventListener('input', function () {
-    this.style.height = 'auto'; // Initially set height to auto
-    this.style.overflow = 'hidden'; // Hide overflow initially
-    const scrollHeight = this.scrollHeight; // Get the new scroll height
-    const viewHeight = this.clientHeight; // Get the current displayed height
-  
-    this.style.height = `${scrollHeight}px`; // Set height based on content
-  
-    // Enable overflow only when scrollHeight reaches or exceeds 700px
-    if (scrollHeight >= 500) {
-      this.style.maxHeight = '500px'; // Set max height for restriction
-      this.style.overflow = 'visible'; // Enable overflow
-    } else {
-      // Remove max height and overflow if content shrinks below 700px
-      this.style.maxHeight = null;
-      this.style.overflow = 'hidden';
-    }
+  document.getElementById('request-textarea').addEventListener('focus', () => {
+      document.getElementById('title-input').style.display = 'block';
+      document.getElementById('close').style.display = 'block';
+      document.getElementById('post-btn').style.display = 'block';
   });
+
+  document.getElementById('close').addEventListener('click', () => {
+      const titleInput = document.getElementById('title-input');
+      titleInput.style.display = 'none';
+      document.getElementById('request-textarea').style.height = '6rem';
+      document.getElementById('close').style.display = 'none';
+      document.getElementById('file').style.marginBottom = '35px';
+      document.getElementById('post-btn').style.display = 'none';
+  });
+
+  const requestTextarea = document.getElementById('request-textarea');
+  requestTextarea.addEventListener('input', function () {
+      this.style.height = 'auto';
+      this.style.overflow = 'hidden';
+      const scrollHeight = this.scrollHeight;
+
+      this.style.height = `${scrollHeight}px`;
+
+      if (scrollHeight >= 500) {
+          this.style.maxHeight = '500px';
+          this.style.overflow = 'visible';
+      } else {
+          this.style.maxHeight = null;
+          this.style.overflow = 'hidden';
+      }
+  });
+
+  const postInput = document.querySelector("#request-textarea");
+  const postButton = document.querySelector("#post-btn");
+  const personalContainer = document.querySelector("#personal-container");
+
+  postButton.addEventListener("click", postBtn);
+
+  function postBtn(event) {
+      event.preventDefault();
+
+      const PostDiv = document.createElement("div");
+      PostDiv.classList.add("user-posts");
+
+      const newPost = document.createElement("li");
+      newPost.innerText = postInput.value;
+
+      PostDiv.appendChild(newPost);
+
+      saveLocal(postInput.value);
+
+      postInput.value = "";
+
+      personalContainer.appendChild(PostDiv);
+  }
+
+  function saveLocal(post) {
+      let posts;
+      if (localStorage.getItem('posts') === null) {
+          posts = [];
+      } else {
+          posts = JSON.parse(localStorage.getItem('posts'));
+      }
+      posts.push(post);
+      localStorage.setItem('posts', JSON.stringify(posts));
+  }
+});

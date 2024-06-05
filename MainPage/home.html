@@ -6,10 +6,8 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="stylesheet" href="assist.css">
-    <link href="https://cdn.jsdelivr.net/npm/remixicon@4.2.0/fonts/remixicon.css" rel="stylesheet" />
-    <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
-
-
+    <link href="https://cdn.jsdelivr.net/npm/remixicon@4.2.0/fonts/remixicon.css" rel="stylesheet">
+    <link href="https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css" rel="stylesheet">
     <script src="assist.js" defer></script>
     <title>Hello, world!</title>
 </head>
@@ -17,39 +15,30 @@
 <body>
     <nav>
         <div class="nav_content">
-            <div class="logo"><a href="#"> <img class="BHLU-logo" src="/LOGO1.png" alt="BHLU Logo"></a></div>
-
-            <label for="check" class="checkbox">
-                <!-- italic <i> -->
-                <i class="ri-menu-line"></i>
-            </label>
+            <div class="logo"><a href="#"><img class="BHLU-logo" src="/LOGO1.png" alt="BHLU Logo"></a></div>
+            <label for="check" class="checkbox"><i class="ri-menu-line"></i></label>
             <input type="checkbox" name="check" id="check">
-
-            <!-- unordered list-->
             <ul>
-                <li> <a href="#"><i class="ri-thumb-up-line"></i></a></li>
-                <li> <a href="#personal-container"><i class="ri-service-line"></i></a></li>
-                <li> <a id="signoutbtn">Sign Out</a></li>
+                <li><a href="#"><i class="ri-thumb-up-line"></i></a></li>
+                <li><a href="#personal-container"><i class="ri-service-line"></i></a></li>
+                <li><a id="signoutbtn">Sign Out</a></li>
             </ul>
-
         </div>
     </nav>
 
-    <!-- main-->
+    <!-- main -->
     <main>
         <section id="form-container">
             <div id="message-container">
-                <i id="close" class="ri-close-line btn" style="display: none;"></i>                 
+                <i id="close" class="ri-close-line btn" style="display: none;"></i>
                 <input type="text" id="title-input" class="title-input" placeholder="Enter title" style="display: none;">
-
-                <textarea id="request-textarea" class="textarea" placeholder="Enter your request..."></textarea>             
-                <i  id = "file"   class='bx bxs-photo-album' ></i>
+                <textarea id="request-textarea" class="textarea" placeholder="Enter your request..."></textarea>
+                <div class="below-subj">
+                    <i id="file" class='bx bxs-photo-album'></i>
+                    <button type="post" id="post-btn" class="btn" style="display: none;">Post</button>
+                </div>
             </div>
-         
-        </section>
-
-        <section id="personal-container">
-            <div>
+            <div id="personal-container">
                 <h2 id="msg"></h2>
                 <h2 id="greet"></h2>
                 Hello
@@ -57,48 +46,60 @@
         </section>
     </main>
 
+    <script type="module">
+        // Import the functions you need from the SDKs you need
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.1/firebase-app.js";
+        import { getDatabase, ref, set } from "https://www.gstatic.com/firebasejs/10.12.1/firebase-database.js";
+        import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.1/firebase-auth.js";
 
-    <script>
-        let UserCreds = JSON.parse(sessionStorage.getItem("user-creds"));
-        let UserInfo = JSON.parse(sessionStorage.getItem("user-info"));
+        // Your web app's Firebase configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyCiEZsjiaintF14Y0MB0lOjYCJRnIV8jqA",
+            authDomain: "community-27dcf.firebaseapp.com",
+            projectId: "community-27dcf",
+            storageBucket: "community-27dcf.appspot.com",
+            messagingSenderId: "888962297245",
+            appId: "1:888962297245:web:1d3fe7d6f9b211526d9374",
+            measurementId: "G-FP14CRMLTB"
+        };
 
-        let MsgHead = document.getElementById('msg');
-        let GreetHead = document.getElementById('greet');
-        let SignoutBtn = document.getElementById('signoutbtn');
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const db = getDatabase(app);
+        const auth = getAuth(app);
 
+        function AddData(userId) {
+            const reqTitle = document.getElementById('title-input');
+            const reqTxt = document.getElementById('request-textarea');
 
-
-        let Signout = () => {
-            sessionStorage.removeItem("user-creds");
-            sessionStorage.removeItem("user-info");
-            window.location.href = '../loginpage/login.html'
+            console.log("Adding data for user: ", userId);
+            set(ref(db, 'users/' + userId + '/posts/' + Date.now()), {
+                title: reqTitle.value,
+                content: reqTxt.value
+            })
+            .then(() => {
+                alert("Data Added Successfully");
+                console.log("Data added successfully");
+            })
+            .catch((error) => {
+                alert("Unsuccessful: " + error.message);
+                console.error("Error adding data: ", error);
+            });
         }
 
-        let CheckCred = () => {
-            if (!sessionStorage.getItem("user-creds")) //checks if it is not null or undefined
-                window.location.href = '../loginpage/login.html';
+        const postBtn = document.getElementById('post-btn');
 
-            else {
-                MsgHead.innerText = `user with email "${UserCreds.email}" logged in`;
-                GreetHead.innerText = `welcome "${UserInfo.firstName} ${UserInfo.lastName}!"`;
-
-            }
-
-        }
-        window.addEventListener('DOMContentLoaded', CheckCred);
-        SignoutBtn.addEventListener('click', Signout);
-
+        // Add a listener for the post button click event
+        postBtn.addEventListener('click', () => {
+            onAuthStateChanged(auth, (user) => {
+                if (user) {
+                    AddData(user.uid);
+                } else {
+                    console.log("User is not logged in");
+                }
+            });
+        });
     </script>
-
-    <!-- Optional JavaScript; choose one of the two! -->
-
-    <!-- Option 1: Bootstrap Bundle with Popper -->
-
-    <!-- Option 2: Separate Popper and Bootstrap JS -->
-    <!--
-    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.2/dist/umd/popper.min.js" integrity="sha384-IQsoLXl5PILFhosVNubq5LC7Qb9DXgDA9i+tQ8Zj3iwWAwPtgFTxbJ8NT4GN1R8p" crossorigin="anonymous"></script>
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.min.js" integrity="sha384-cVKIPhGWiC2Al4u+LWgxfKTRIcfu0JTxR+EQDz/bgldoEyl4H0zUF0QKbrJ0EcQF" crossorigin="anonymous"></script>
-    -->
 </body>
 
 </html>
