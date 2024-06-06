@@ -1,5 +1,5 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.1/firebase-app.js";
-import { getDatabase, ref, set, onChildRemoved, onChildAdded } from "https://www.gstatic.com/firebasejs/10.12.1/firebase-database.js";
+import { getDatabase, ref, set, onChildAdded, onChildRemoved } from "https://www.gstatic.com/firebasejs/10.12.1/firebase-database.js";
 import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.1/firebase-auth.js";
 
 // Firebase configuration object
@@ -51,33 +51,28 @@ class Post {
     document.getElementById('firstimg').addEventListener('change', Post.previewImage);
     document.getElementById('post-btn').addEventListener("click", Post.addPost);
 
-    // Retrieve posts from local storage
-    Post.retrievePosts();
-
     // Monitor authentication state changes
     onAuthStateChanged(auth, (user) => {
       if (user) {
-        const userId = user.uid;
-        const userPostsRef = ref(db, 'users/' + userId + '/posts');
+        // Listen to the 'posts' node for all users
+        const postsRef = ref(db, 'posts');
+
+        // Add new posts to the DOM when added to the database
+        onChildAdded(postsRef, (snapshot) => {
+          const post = snapshot.val();
+          const postId = snapshot.key;
+          if (!document.getElementById(postId)) {
+            Post.addPostToDOM(postId, post.title, post.content, post.image, post.userId);
+          }
+        });
 
         // Remove post from DOM when it's removed from the database
-        onChildRemoved(userPostsRef, (snapshot) => {
+        onChildRemoved(postsRef, (snapshot) => {
           const postId = snapshot.key;
           const postElement = document.getElementById(postId);
           if (postElement) {
             postElement.remove();
           }
-
-          // Remove post from local storage
-          Post.removeLocal(postId);
-        });
-
-        // Add post to DOM when a new post is added to the database
-        onChildAdded(userPostsRef, (snapshot) => {
-          const post = snapshot.val();
-          const postId = snapshot.key;
-          Post.addPostToDOM(postId, post.title, post.content, post.image);
-          Post.saveLocal(postId, post.title, post.content, post.image);
         });
       }
     });
@@ -155,7 +150,8 @@ class Post {
 
     const postId = Date.now().toString();
 
-    set(ref(db, 'users/' + userId + '/posts/' + postId), {
+    set(ref(db, 'posts/' + postId), {
+      userId: userId,
       title: reqTitle,
       content: reqTxt,
       image: imgSrc
@@ -167,13 +163,11 @@ class Post {
         alert("Unsuccessful: " + error.message);
       });
 
-    // Add the post to the DOM and local storage
-    Post.addPostToDOM(postId, reqTitle, reqTxt, imgSrc);
-    Post.saveLocal(postId, reqTitle, reqTxt, imgSrc);
+    // Hide post-related elements
     Post.hidePostElements();
   }
 
-  static addPostToDOM(postId, title, content, image) {
+  static addPostToDOM(postId, title, content, image, userId) {
     // Create and add the post element to the DOM
     const PostDiv = document.createElement("div");
     PostDiv.classList.add("user-posts");
@@ -185,8 +179,12 @@ class Post {
     const newPost = document.createElement("p");
     newPost.innerText = content;
 
+    const userIdElement = document.createElement("small");
+    userIdElement.innerText = `Posted by: ${userId}`;
+
     PostDiv.appendChild(titlePost);
     PostDiv.appendChild(newPost);
+    PostDiv.appendChild(userIdElement);
     if (image) {
       const postImg = document.createElement('img');
       postImg.src = image;
@@ -194,33 +192,8 @@ class Post {
       PostDiv.appendChild(postImg);
     }
 
-    // Instead of using appendChild,  prepend the post element to the personal container to display it at the top
+    // Prepend the post element to the personal container to display it at the top
     document.getElementById('personal-container').prepend(PostDiv);
-  }
-
-  static saveLocal(postId, title, content, image) {
-    // Save the post to local storage
-    let posts = JSON.parse(localStorage.getItem('posts')) || [];
-    posts.push({ postId, title, content, image });
-    localStorage.setItem('posts', JSON.stringify(posts));
-  }
-
-  static retrievePosts() {
-    // Retrieve posts from local storage and add them to the DOM
-    // Reverse posts array to display latest posts on top
-    let posts = JSON.parse(localStorage.getItem('posts')) || [];
-    posts.reverse().forEach(post => {
-      if (post && post.postId && post.title && post.content) {
-        Post.addPostToDOM(post.postId, post.title, post.content, post.image);
-      }
-    });
-  }
-
-  static removeLocal(postId) {
-    // Remove a post from local storage
-    let posts = JSON.parse(localStorage.getItem('posts')) || [];
-    posts = posts.filter(post => post.postId !== postId);
-    localStorage.setItem('posts', JSON.stringify(posts));
   }
 }
 
