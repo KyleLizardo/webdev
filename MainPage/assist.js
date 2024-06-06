@@ -1,5 +1,5 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.1/firebase-app.js";
-import { getDatabase, ref, set, onChildRemoved } from "https://www.gstatic.com/firebasejs/10.12.1/firebase-database.js";
+import { getDatabase, ref, set, onChildRemoved, onChildAdded } from "https://www.gstatic.com/firebasejs/10.12.1/firebase-database.js";
 import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.1/firebase-auth.js";
 
 // Firebase configuration object
@@ -70,6 +70,14 @@ class Post {
 
           // Remove post from local storage
           Post.removeLocal(postId);
+        });
+
+        // Add post to DOM when a new post is added to the database
+        onChildAdded(userPostsRef, (snapshot) => {
+          const post = snapshot.val();
+          const postId = snapshot.key;
+          Post.addPostToDOM(postId, post.title, post.content, post.image);
+          Post.saveLocal(postId, post.title, post.content, post.image);
         });
       }
     });
@@ -186,7 +194,7 @@ class Post {
       PostDiv.appendChild(postImg);
     }
 
-    //Instead of using appendChild,  Prepend the post element to the personal container to display it at the top
+    // Instead of using appendChild,  prepend the post element to the personal container to display it at the top
     document.getElementById('personal-container').prepend(PostDiv);
   }
 
@@ -199,7 +207,7 @@ class Post {
 
   static retrievePosts() {
     // Retrieve posts from local storage and add them to the DOM
-    //reverse 
+    // Reverse posts array to display latest posts on top
     let posts = JSON.parse(localStorage.getItem('posts')) || [];
     posts.reverse().forEach(post => {
       if (post && post.postId && post.title && post.content) {
