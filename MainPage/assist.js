@@ -274,7 +274,7 @@ class Post {
         });
 
         // Load existing comments for the post
-        Post.loadComments(postId, postDiv, userId);
+         Post.loadComments(postId, postDiv, userId);
       } else {
         console.log("No user data available");
       }
