@@ -8,7 +8,7 @@
     <link rel="stylesheet" href="assist.css">
     <link href="https://cdn.jsdelivr.net/npm/remixicon@4.2.0/fonts/remixicon.css" rel="stylesheet">
     <link href="https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css" rel="stylesheet">
-    <script src="assist.js" defer></script>
+   
     <title>Hello, world!</title>
 </head>
 
@@ -33,73 +33,29 @@
                 <i id="close" class="ri-close-line btn" style="display: none;"></i>
                 <input type="text" id="title-input" class="title-input" placeholder="Enter title" style="display: none;">
                 <textarea id="request-textarea" class="textarea" placeholder="Enter your request..."></textarea>
+                <div id="display-image" style="display: none;"></div>
+               
+                <!-- below subj--> 
                 <div class="below-subj">
-                    <i id="file" class='bx bxs-photo-album'></i>
-                    <button type="post" id="post-btn" class="btn" style="display: none;">Post</button>
+                   <input type="file" name="img" id="firstimg" style="display: none;"> 
+                   <label for="firstimg"><i id="file" class='bx bxs-photo-album' style="display: none;"></i></label>
+                   <button type="post" id="post-btn" class="btn" style="display: none;">Post</button>
                 </div>
             </div>
-            <div id="personal-container">
-                <h2 id="msg"></h2>
-                <h2 id="greet"></h2>
-                Hello
+            
+            <div id="personal-container">             
+                <!-- post container-->  
             </div>
         </section>
     </main>
 
-    <script type="module">
-        // Import the functions you need from the SDKs you need
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.1/firebase-app.js";
-        import { getDatabase, ref, set } from "https://www.gstatic.com/firebasejs/10.12.1/firebase-database.js";
-        import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.1/firebase-auth.js";
-
-        // Your web app's Firebase configuration
-        const firebaseConfig = {
-            apiKey: "AIzaSyCiEZsjiaintF14Y0MB0lOjYCJRnIV8jqA",
-            authDomain: "community-27dcf.firebaseapp.com",
-            projectId: "community-27dcf",
-            storageBucket: "community-27dcf.appspot.com",
-            messagingSenderId: "888962297245",
-            appId: "1:888962297245:web:1d3fe7d6f9b211526d9374",
-            measurementId: "G-FP14CRMLTB"
-        };
-
-        // Initialize Firebase
-        const app = initializeApp(firebaseConfig);
-        const db = getDatabase(app);
-        const auth = getAuth(app);
-
-        function AddData(userId) {
-            const reqTitle = document.getElementById('title-input');
-            const reqTxt = document.getElementById('request-textarea');
-
-            console.log("Adding data for user: ", userId);
-            set(ref(db, 'users/' + userId + '/posts/' + Date.now()), {
-                title: reqTitle.value,
-                content: reqTxt.value
-            })
-            .then(() => {
-                alert("Data Added Successfully");
-                console.log("Data added successfully");
-            })
-            .catch((error) => {
-                alert("Unsuccessful: " + error.message);
-                console.error("Error adding data: ", error);
-            });
-        }
-
-        const postBtn = document.getElementById('post-btn');
-
-        // Add a listener for the post button click event
-        postBtn.addEventListener('click', () => {
-            onAuthStateChanged(auth, (user) => {
-                if (user) {
-                    AddData(user.uid);
-                } else {
-                    console.log("User is not logged in");
-                }
-            });
-        });
-    </script>
+    
+    <script src="assist.js" type="module" defer> </script>
+ 
 </body>
 
 </html>
+
+<!--dump
+   <h2 id="msg"></h2>
+   <h2 id="greet"></h2>
