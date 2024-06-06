@@ -54,25 +54,29 @@ class Post {
     // Monitor authentication state changes
     onAuthStateChanged(auth, (user) => {
       if (user) {
-        // Listen to the 'posts' node for all users
-        const postsRef = ref(db, 'users/' + user.uid + '/posts');
+        // Listen to all users' posts
+        const usersRef = ref(db, 'users');
+        onChildAdded(usersRef, (snapshot) => {
+          const userId = snapshot.key;
+          const postsRef = ref(db, `users/${userId}/posts`);
 
-        // Add new posts to the DOM when added to the database
-        onChildAdded(postsRef, (snapshot) => {
-          const post = snapshot.val();
-          const postId = snapshot.key;
-          if (!document.getElementById(postId)) {
-            Post.addPostToDOM(postId, post.title, post.content, post.image, post.userId);
-          }
-        });
+          // Add new posts to the DOM when added to the database
+          onChildAdded(postsRef, (snapshot) => {
+            const post = snapshot.val();
+            const postId = snapshot.key;
+            if (!document.getElementById(postId)) {
+              Post.addPostToDOM(postId, post.title, post.content, post.image, userId);
+            }
+          });
 
-        // Remove post from DOM when it's removed from the database
-        onChildRemoved(postsRef, (snapshot) => {
-          const postId = snapshot.key;
-          const postElement = document.getElementById(postId);
-          if (postElement) {
-            postElement.remove();
-          }
+          // Remove post from DOM when it's removed from the database
+          onChildRemoved(postsRef, (snapshot) => {
+            const postId = snapshot.key;
+            const postElement = document.getElementById(postId);
+            if (postElement) {
+              postElement.remove();
+            }
+          });
         });
       }
     });
@@ -260,7 +264,7 @@ class Post {
               const commentContent = commentInput.value.trim();
               if (commentContent) {
                 // Save the comment to the database
-                Post.saveComment(postId, userId, commentContent, fullName);
+                Post.saveComment(userId, postId, commentContent);
 
                 // Clear the comment input area
                 commentInput.value = '';
@@ -274,7 +278,7 @@ class Post {
         });
 
         // Load existing comments for the post
-         Post.loadComments(postId, postDiv, userId);
+        Post.loadComments(userId, postId, postDiv);
       } else {
         console.log("No user data available");
       }
@@ -283,26 +287,41 @@ class Post {
     });
   }
 
-  static saveComment(postId, userId, commentContent, fullName) {
+  static saveComment(userId, postId, commentContent) {
     const commentId = Date.now().toString();
-    const commentData = {
-      userId: userId,
-      content: commentContent,
-      fullName: fullName,
-      timestamp: Date.now()
-    };
-  
-    // Set the comment data under the user's post
-    set(ref(db, `users/${userId}/posts/${postId}/comments/${commentId}`), commentData)
-      .then(() => {
-        console.log("Comment saved successfully");
-      })
-      .catch((error) => {
-        console.error("Error saving comment:", error);
-      });
+    onAuthStateChanged(auth, (user) => {
+      if (user) {
+        get(ref(db, `users/${user.uid}`)).then((snapshot) => {
+          if (snapshot.exists()) {
+            const userInfo = snapshot.val();
+            const fullName = `${userInfo.firstName} ${userInfo.lastName}`;
+
+            const commentData = {
+              userId: user.uid,
+              content: commentContent,
+              fullName: fullName,
+              timestamp: Date.now()
+            };
+
+            // Set the comment data under the user's post node
+            set(ref(db, `users/${userId}/posts/${postId}/comments/${commentId}`), commentData)
+              .then(() => {
+                console.log("Comment saved successfully");
+              })
+              .catch((error) => {
+                console.error("Error saving comment:", error);
+              });
+          } else {
+            console.log("No user data available");
+          }
+        }).catch((error) => {
+          console.error(error);
+        });
+      }
+    });
   }
 
-  static loadComments(postId, postDiv, userId) {
+  static loadComments(userId, postId, postDiv) {
     const commentsRef = ref(db, `users/${userId}/posts/${postId}/comments`);
     onChildAdded(commentsRef, (snapshot) => {
       const comment = snapshot.val();
