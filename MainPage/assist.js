@@ -1,5 +1,5 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.1/firebase-app.js";
-import { getDatabase, ref, set, onChildAdded, onChildRemoved } from "https://www.gstatic.com/firebasejs/10.12.1/firebase-database.js";
+import { getDatabase, ref, set, onChildAdded, onChildRemoved, get, child } from "https://www.gstatic.com/firebasejs/10.12.1/firebase-database.js";
 import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.1/firebase-auth.js";
 
 // Firebase configuration object
@@ -131,6 +131,15 @@ class Post {
   }
 
   static addPost() {
+    // Check if the title and content are provided
+    const reqTitle = document.getElementById('title-input').value;
+    const reqTxt = document.getElementById('request-textarea').value;
+
+    if (!reqTitle.trim() || !reqTxt.trim()) {
+      alert("Title and content are required.");
+      return;
+    }
+
     // Add a new post if the user is authenticated
     onAuthStateChanged(auth, (user) => {
       if (user) {
@@ -150,50 +159,78 @@ class Post {
 
     const postId = Date.now().toString();
 
-    set(ref(db, 'posts/' + postId), {
-      userId: userId,
-      title: reqTitle,
-      content: reqTxt,
-      image: imgSrc
-    })
-      .then(() => {
-        alert("Data Added Successfully");
-      })
-      .catch((error) => {
-        alert("Unsuccessful: " + error.message);
-      });
+    get(ref(db, `users/${userId}`)).then((snapshot) => {
+      if (snapshot.exists()) {
+        const userInfo = snapshot.val();
+        set(ref(db, 'posts/' + postId), {
+          userId: userId,
+          firstName: userInfo.firstName,
+          lastName: userInfo.lastName,
+          title: reqTitle,
+          content: reqTxt,
+          image: imgSrc
+        })
+          .then(() => {
+            alert("Data Added Successfully");
+          })
+          .catch((error) => {
+            alert("Unsuccessful: " + error.message);
+          });
 
-    // Hide post-related elements
-    Post.hidePostElements();
+        // Hide post-related elements
+        Post.hidePostElements();
+      } else {
+        console.log("No user data available");
+      }
+    }).catch((error) => {
+      console.error(error);
+    });
   }
 
   static addPostToDOM(postId, title, content, image, userId) {
-    // Create and add the post element to the DOM
-    const PostDiv = document.createElement("div");
-    PostDiv.classList.add("user-posts");
-    PostDiv.id = postId;
+    // Fetch user data to get the full name
+    get(ref(db, `users/${userId}`)).then((snapshot) => {
+      if (snapshot.exists()) {
+        const userInfo = snapshot.val();
+        const fullName = `${userInfo.firstName} ${userInfo.lastName}`;
 
-    const titlePost = document.createElement("h1");
-    titlePost.innerText = title;
+        // Create and add the post element to the DOM
+        const PostDiv = document.createElement("div");
+        PostDiv.classList.add("user-posts");
+        PostDiv.id = postId;
 
-    const newPost = document.createElement("p");
-    newPost.innerText = content;
+        const titlePost = document.createElement("h1");
+        titlePost.innerText = title; 
 
-    const userIdElement = document.createElement("small");
-    userIdElement.innerText = `Posted by: ${userId}`;
+        const newPost = document.createElement("p");
+        newPost.innerText = content;
 
-    PostDiv.appendChild(titlePost);
-    PostDiv.appendChild(newPost);
-    PostDiv.appendChild(userIdElement);
-    if (image) {
-      const postImg = document.createElement('img');
-      postImg.src = image;
-      postImg.style.maxWidth = '100%';
-      PostDiv.appendChild(postImg);
-    }
+        const userIdElement = document.createElement("p");
+        userIdElement.innerText = `Posted by: ${fullName}`;
 
-    // Prepend the post element to the personal container to display it at the top
-    document.getElementById('personal-container').prepend(PostDiv);
+        const userIdContainer =  document.createElement("div");
+        userIdContainer.classList.add("userid-container");        
+        PostDiv.appendChild(titlePost);
+        PostDiv.appendChild(newPost);
+        
+        if (image) {
+          const postImg = document.createElement('img');
+          postImg.src = image;
+          postImg.style.maxWidth = '100%';
+          PostDiv.appendChild(postImg);
+          
+        }
+        PostDiv.appendChild(userIdContainer);
+        userIdContainer.appendChild(userIdElement);
+
+        // Prepend the post element to the personal container to display it at the top
+        document.getElementById('personal-container').prepend(PostDiv);
+      } else {
+        console.log("No user data available");
+      }
+    }).catch((error) => {
+      console.error(error);
+    });
   }
 }
 

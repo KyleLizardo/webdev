@@ -230,23 +230,30 @@ section {
     display: flex;
     /* Make it a flex container */
     flex-direction: column;
-    /* Align items vertically / this is like a block covers entire line per element*/
+    /* Align items vertically / this is like a block covers entire line per element */
     align-items: center;
     /* Center items horizontally */
 }
 
 .user-posts {
+    position: relative; /* Set position to relative for proper positioning */
+    background-color: #eeeeee;
     padding: 10px;
-    border: 2px solid #1f2937;
+    box-shadow: rgba(60, 64, 67, 0.3) 0px 1px 2px 0px, rgba(60, 64, 67, 0.15) 0px 2px 6px 2px;
     border-radius: 10px;
     display: flex;
     flex-direction: column;
-    text-align: justify;
+    text-align: left;
     width: 30rem;
     max-height: 30rem;
     min-height: 20rem;
     margin-bottom: 1rem;
     gap: 10px;
+    position: relative; /* Ensure position is relative */
+}
+
+.user-posts h1 {
+    border-bottom: 1.5px solid #1f2937;
 }
 
 .user-posts img {
@@ -257,6 +264,25 @@ section {
     max-height: 20rem;
 }
 
+
+.userid-container {
+    position: absolute;
+    bottom: 0;
+    right: 0;
+    padding: 10px; /* Adjust padding as needed */
+    background-color: var(--primary-color);
+    border-radius: 0 0 10px 10px; /* Rounded corners for the bottom */
+}
+
+.userid-container p {
+color: white;
+border-radius: 5px;    
+padding: 0.25em 0.5em;    
+font-size: 10pt;
+display: inline;
+background-color: var(--primary-color);    
+}
+
 @media (max-width: 700px) {
 
 
@@ -264,7 +290,7 @@ section {
 
         width: 100%;
         max-width: 40em;
-          
+
     }
 
     .title-input,
@@ -277,10 +303,10 @@ section {
     }
 
     .user-posts img {
-     width: 100%;
+        width: 100%;
     }
 
-    
+
 
 }
 
@@ -302,7 +328,7 @@ section {
         gap: 3rem;
     }
 
-    nav #check:checked ~ ul {
+    nav #check:checked~ul {
         left: 0;
     }
 }
