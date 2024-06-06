@@ -1,5 +1,5 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.1/firebase-app.js";
-import { getDatabase, ref, set, onChildAdded, onChildRemoved, get, child } from "https://www.gstatic.com/firebasejs/10.12.1/firebase-database.js";
+import { getDatabase, ref, set, onChildAdded, onChildRemoved, get, child, push } from "https://www.gstatic.com/firebasejs/10.12.1/firebase-database.js";
 import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.1/firebase-auth.js";
 
 // Firebase configuration object
@@ -174,6 +174,7 @@ class Post {
             alert("Data Added Successfully");
           })
           .catch((error) => {
+            console.error("Error saving post:", error); // Log error
             alert("Unsuccessful: " + error.message);
           });
 
@@ -195,42 +196,126 @@ class Post {
         const fullName = `${userInfo.firstName} ${userInfo.lastName}`;
 
         // Create and add the post element to the DOM
-        const PostDiv = document.createElement("div");
-        PostDiv.classList.add("user-posts");
-        PostDiv.id = postId;
+        const postDiv = document.createElement("div");
+        postDiv.classList.add("user-posts");
+        postDiv.id = postId;
 
         const titlePost = document.createElement("h1");
-        titlePost.innerText = title; 
+        titlePost.innerText = title;
 
         const newPost = document.createElement("p");
+        newPost.classList.add("content");
         newPost.innerText = content;
 
         const userIdElement = document.createElement("p");
         userIdElement.innerText = `Posted by: ${fullName}`;
 
-        const userIdContainer =  document.createElement("div");
-        userIdContainer.classList.add("userid-container");        
-        PostDiv.appendChild(titlePost);
-        PostDiv.appendChild(newPost);
-        
+        const objContainer = document.createElement("div");
+        objContainer.classList.add("userid-container");
+        postDiv.appendChild(titlePost);
+        postDiv.appendChild(newPost);
+
+        const commentButton = document.createElement("button");
+        commentButton.innerHTML = '<i class="ri-chat-4-line"></i>';
+        commentButton.classList.add("comment-btn");
+
         if (image) {
           const postImg = document.createElement('img');
           postImg.src = image;
           postImg.style.maxWidth = '100%';
-          PostDiv.appendChild(postImg);
-          
+          postDiv.appendChild(postImg);
         }
-        PostDiv.appendChild(userIdContainer);
-        userIdContainer.appendChild(userIdElement);
+
+        postDiv.appendChild(objContainer);
+        objContainer.appendChild(userIdElement);
+        objContainer.appendChild(commentButton);
 
         // Prepend the post element to the personal container to display it at the top
-        document.getElementById('personal-container').prepend(PostDiv);
+        document.getElementById('personal-container').prepend(postDiv);
+
+        // Add event listener to comment button
+        commentButton.addEventListener('click', () => {
+          // Check if comment input area and submit button already exist
+          let commentInput = postDiv.querySelector('.comment-input');
+          let submitButton = postDiv.querySelector('.comment-submit');
+          const existingComments = postDiv.querySelectorAll('.comment');
+
+          if (commentInput && submitButton) {
+            // If they exist, remove them and any existing comments
+            commentInput.remove();
+            submitButton.remove();
+            existingComments.forEach(comment => comment.remove());
+          } else {
+            // If they don't exist, create and append them
+            commentInput = document.createElement('textarea');
+            commentInput.placeholder = 'Enter your comment...';
+            commentInput.classList.add('comment-input');
+
+            submitButton = document.createElement('button');
+            submitButton.innerText = 'Submit';
+            submitButton.classList.add('comment-submit');
+
+            // Add event listener to submit button
+            submitButton.addEventListener('click', () => {
+              const commentContent = commentInput.value.trim();
+              if (commentContent) {
+                // Save the comment to the database
+                Post.saveComment(postId, userId, commentContent, fullName);
+
+                // Clear the comment input area
+                commentInput.value = '';
+              }
+            });
+
+            // Append comment input and submit button below the comment button
+            postDiv.appendChild(commentInput);
+            postDiv.appendChild(submitButton);
+          }
+        });
+
+        // Load existing comments for the post
+        Post.loadComments(postId, postDiv);
       } else {
         console.log("No user data available");
       }
     }).catch((error) => {
       console.error(error);
     });
+  }
+
+  static saveComment(postId, userId, commentContent, fullName) {
+    const commentId = Date.now().toString();
+    const commentData = {
+      userId: userId,
+      content: commentContent,
+      fullName: fullName,
+      timestamp: Date.now()
+    };
+
+    // Set the comment data under the user's post
+    set(ref(db, `posts/${postId}/comments/${commentId}`), commentData)
+      .then(() => {
+        console.log("Comment saved successfully");
+      })
+      .catch((error) => {
+        console.error("Error saving comment:", error);
+      });
+}
+
+
+  static loadComments(postId, postDiv) {
+    const commentsRef = ref(db, `posts/${postId}/comments`);
+    onChildAdded(commentsRef, (snapshot) => {
+      const comment = snapshot.val();
+      Post.displayComment(comment, postDiv);
+    });
+  }
+
+  static displayComment(comment, postDiv) {
+    const commentElement = document.createElement('div');
+    commentElement.classList.add('comment');
+    commentElement.innerHTML = `<p>${comment.fullName}:</p><p>${comment.content}</p>`;
+    postDiv.appendChild(commentElement);
   }
 }
 
