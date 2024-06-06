@@ -1,5 +1,5 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.1/firebase-app.js";
-import { getDatabase, ref, set, onChildAdded, onChildRemoved, get, child, push } from "https://www.gstatic.com/firebasejs/10.12.1/firebase-database.js";
+import { getDatabase, ref, set, onChildAdded, onChildRemoved, get, push } from "https://www.gstatic.com/firebasejs/10.12.1/firebase-database.js";
 import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.1/firebase-auth.js";
 
 // Firebase configuration object
@@ -55,7 +55,7 @@ class Post {
     onAuthStateChanged(auth, (user) => {
       if (user) {
         // Listen to the 'posts' node for all users
-        const postsRef = ref(db, 'posts');
+        const postsRef = ref(db, 'users/' + user.uid + '/posts');
 
         // Add new posts to the DOM when added to the database
         onChildAdded(postsRef, (snapshot) => {
@@ -162,7 +162,7 @@ class Post {
     get(ref(db, `users/${userId}`)).then((snapshot) => {
       if (snapshot.exists()) {
         const userInfo = snapshot.val();
-        set(ref(db, 'posts/' + postId), {
+        set(ref(db, `users/${userId}/posts/${postId}`), {
           userId: userId,
           firstName: userInfo.firstName,
           lastName: userInfo.lastName,
@@ -274,7 +274,7 @@ class Post {
         });
 
         // Load existing comments for the post
-        Post.loadComments(postId, postDiv);
+        Post.loadComments(postId, postDiv, userId);
       } else {
         console.log("No user data available");
       }
@@ -291,47 +291,33 @@ class Post {
       fullName: fullName,
       timestamp: Date.now()
     };
-
+  
     // Set the comment data under the user's post
-    set(ref(db, `posts/${postId}/comments/${commentId}`), commentData)
+    set(ref(db, `users/${userId}/posts/${postId}/comments/${commentId}`), commentData)
       .then(() => {
         console.log("Comment saved successfully");
       })
       .catch((error) => {
         console.error("Error saving comment:", error);
       });
-}
+  }
 
-
-  static loadComments(postId, postDiv) {
-    const commentsRef = ref(db, `posts/${postId}/comments`);
+  static loadComments(postId, postDiv, userId) {
+    const commentsRef = ref(db, `users/${userId}/posts/${postId}/comments`);
     onChildAdded(commentsRef, (snapshot) => {
       const comment = snapshot.val();
       Post.displayComment(comment, postDiv);
+    }, (error) => {
+      console.error("Error loading comments:", error);
     });
   }
 
   static displayComment(comment, postDiv) {
-    const userId = comment.userId;
-
-    // Fetch user data to get the full name
-    get(ref(db, `users/${userId}`)).then((snapshot) => {
-        if (snapshot.exists()) {
-            const userInfo = snapshot.val();
-            const fullName = `${userInfo.firstName} ${userInfo.lastName}`;
-
-            // Create a comment element with the actual user's full name
-            const commentElement = document.createElement('div');
-            commentElement.classList.add('comment');
-            commentElement.innerHTML = `<p>${fullName}:</p><p>${comment.content}</p>`;
-            postDiv.appendChild(commentElement);
-        } else {
-            console.log("No user data available");
-        }
-    }).catch((error) => {
-        console.error(error);
-    });
-}
+    const commentElement = document.createElement('div');
+    commentElement.classList.add('comment');
+    commentElement.innerHTML = `<p>${comment.fullName}:</p><p>${comment.content}</p>`;
+    postDiv.appendChild(commentElement);
+  }
 }
 
 // Initialize authentication and post functionalities when the DOM content is loaded
