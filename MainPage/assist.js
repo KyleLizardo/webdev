@@ -193,13 +193,11 @@ class Post {
   }
 
   static addPostToDOM(postId, title, content, image, userId) {
-    // Fetch user data to get the full name
     get(ref(db, `users/${userId}`)).then((snapshot) => {
       if (snapshot.exists()) {
         const userInfo = snapshot.val();
         const fullName = `${userInfo.firstName} ${userInfo.lastName}`;
 
-        // Create and add the post element to the DOM
         const postDiv = document.createElement("div");
         postDiv.classList.add("user-posts");
         postDiv.id = postId;
@@ -234,23 +232,20 @@ class Post {
         objContainer.appendChild(userIdElement);
         objContainer.appendChild(commentButton);
 
-        // Prepend the post element to the personal container to display it at the top
         document.getElementById('personal-container').prepend(postDiv);
 
-        // Add event listener to comment button
         commentButton.addEventListener('click', () => {
-          // Check if comment input area and submit button already exist
           let commentInput = postDiv.querySelector('.comment-input');
           let submitButton = postDiv.querySelector('.comment-submit');
-          const existingComments = postDiv.querySelectorAll('.comment');
+          let commentsSection = postDiv.querySelector('.comments-section');
 
           if (commentInput && submitButton) {
-            // If they exist, remove them and any existing comments
             commentInput.remove();
             submitButton.remove();
-            existingComments.forEach(comment => comment.remove());
+            if (commentsSection) {
+              commentsSection.remove();
+            }
           } else {
-            // If they don't exist, create and append them
             commentInput = document.createElement('textarea');
             commentInput.placeholder = 'Enter your comment...';
             commentInput.classList.add('comment-input');
@@ -259,26 +254,25 @@ class Post {
             submitButton.innerText = 'Submit';
             submitButton.classList.add('comment-submit');
 
-            // Add event listener to submit button
-            submitButton.addEventListener('click', () => {
+            submitButton.addEventListener('click', (event) => {
+              event.preventDefault();
               const commentContent = commentInput.value.trim();
               if (commentContent) {
-                // Save the comment to the database
-                Post.saveComment(userId, postId, commentContent);
-
-                // Clear the comment input area
+                Post.saveComment(userId, postId, commentContent, userInfo);
                 commentInput.value = '';
               }
             });
 
-            // Append comment input and submit button below the comment button
+            commentsSection = document.createElement('div');
+            commentsSection.classList.add('comments-section');
+            postDiv.appendChild(commentsSection);
+
             postDiv.appendChild(commentInput);
             postDiv.appendChild(submitButton);
+
+            Post.loadComments(userId, postId, commentsSection);
           }
         });
-
-        // Load existing comments for the post
-        Post.loadComments(userId, postId, postDiv);
       } else {
         console.log("No user data available");
       }
@@ -288,33 +282,46 @@ class Post {
   }
 
   static saveComment(userId, postId, commentContent) {
+    // Generate a unique comment ID based on the current timestamp
     const commentId = Date.now().toString();
+
+    // Listen for changes in the authentication state
     onAuthStateChanged(auth, (user) => {
+      // Check if the user is authenticated
       if (user) {
+        // Fetch the authenticated user's information from the database
         get(ref(db, `users/${user.uid}`)).then((snapshot) => {
+          // Check if the user data exists in the snapshot
           if (snapshot.exists()) {
+            // Retrieve user information from the snapshot
             const userInfo = snapshot.val();
+            // Combine first name and last name to get the full name
             const fullName = `${userInfo.firstName} ${userInfo.lastName}`;
 
+            // Create a comment data object with necessary details
             const commentData = {
-              userId: user.uid,
-              content: commentContent,
-              fullName: fullName,
-              timestamp: Date.now()
+              userId: user.uid, // ID of the authenticated user
+              content: commentContent, // Content of the comment
+              fullName: fullName, // Full name of the user
+              timestamp: Date.now() // Current timestamp
             };
 
-            // Set the comment data under the user's post node
+            // Save the comment data under the specified user's post in the database
             set(ref(db, `users/${userId}/posts/${postId}/comments/${commentId}`), commentData)
               .then(() => {
+                // Log success message if the comment is saved successfully
                 console.log("Comment saved successfully");
               })
               .catch((error) => {
+                // Log error message if there's an issue saving the comment
                 console.error("Error saving comment:", error);
               });
           } else {
+            // Log message if no user data is available in the snapshot
             console.log("No user data available");
           }
         }).catch((error) => {
+          // Log error if there's an issue fetching the user data
           console.error(error);
         });
       }
@@ -323,6 +330,7 @@ class Post {
 
   static loadComments(userId, postId, postDiv) {
     const commentsRef = ref(db, `users/${userId}/posts/${postId}/comments`);
+
     onChildAdded(commentsRef, (snapshot) => {
       const comment = snapshot.val();
       Post.displayComment(comment, postDiv);
