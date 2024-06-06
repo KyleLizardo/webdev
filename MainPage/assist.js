@@ -312,11 +312,26 @@ class Post {
   }
 
   static displayComment(comment, postDiv) {
-    const commentElement = document.createElement('div');
-    commentElement.classList.add('comment');
-    commentElement.innerHTML = `<p>${comment.fullName}:</p><p>${comment.content}</p>`;
-    postDiv.appendChild(commentElement);
-  }
+    const userId = comment.userId;
+
+    // Fetch user data to get the full name
+    get(ref(db, `users/${userId}`)).then((snapshot) => {
+        if (snapshot.exists()) {
+            const userInfo = snapshot.val();
+            const fullName = `${userInfo.firstName} ${userInfo.lastName}`;
+
+            // Create a comment element with the actual user's full name
+            const commentElement = document.createElement('div');
+            commentElement.classList.add('comment');
+            commentElement.innerHTML = `<p>${fullName}:</p><p>${comment.content}</p>`;
+            postDiv.appendChild(commentElement);
+        } else {
+            console.log("No user data available");
+        }
+    }).catch((error) => {
+        console.error(error);
+    });
+}
 }
 
 // Initialize authentication and post functionalities when the DOM content is loaded
