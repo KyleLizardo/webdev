@@ -532,40 +532,46 @@ class Post {
   }
 
   static saveEditedPost(postId, newTitle, newContent, newImage, userId) {
-    const postRef = ref(db, `users/${userId}/posts/${postId}`);
-    get(postRef).then((snapshot) => {
-      if (snapshot.exists()) {
-        const postData = snapshot.val();
-        const updatedData = {
-          ...postData,
-          title: newTitle,
-          content: newContent,
-          image: newImage || postData.image,
-        };
+    onAuthStateChanged(auth, (user) => {
+      if (user && user.uid === userId) {
+        const postRef = ref(db, `users/${userId}/posts/${postId}`);
+        get(postRef).then((snapshot) => {
+          if (snapshot.exists()) {
+            const postData = snapshot.val();
+            const updatedData = {
+              ...postData,
+              title: newTitle,
+              content: newContent,
+              image: newImage || postData.image,
+            };
   
-        set(postRef, updatedData)
-          .then(() => {
-            alert("Post updated successfully");
+            set(postRef, updatedData)
+              .then(() => {
+                alert("Post updated successfully");
   
-            // Ensure the element exists before proceeding
-            const postElement = document.getElementById(`post-${postId}`);
-            if (postElement) {
-              Post.cancelEditPost(`post-${postId}`, newTitle, newContent, updatedData.image, userId, auth.currentUser.uid);
-            } else {
-              console.error("Post element not found in the DOM");
-            }
-          })
-          .catch((error) => {
-            console.error("Error updating post:", error);
-          });
+                // Ensure the element exists before proceeding
+                const postElement = document.getElementById(`post-${postId}`);
+                if (postElement) {
+                  Post.cancelEditPost(`post-${postId}`, newTitle, newContent, updatedData.image, userId, auth.currentUser.uid);
+                } else {
+                  console.error("Post element not found in the DOM");
+                }
+              })
+              .catch((error) => {
+                console.error("Error updating post:", error);
+              });
+          } else {
+            console.error("Post not found.");
+          }
+        }).catch((error) => {
+          console.error("Error fetching post data:", error);
+        });
       } else {
-        console.error("Post not found.");
+        alert("You are not authorized to edit this post.");
       }
-    }).catch((error) => {
-      console.error("Error fetching post data:", error);
     });
   }
-
+  
 static deletePost(userId, postId) {
   onAuthStateChanged(auth, (user) => {
     if (user && user.uid === userId) {
