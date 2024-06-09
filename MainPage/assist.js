@@ -1,5 +1,5 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.1/firebase-app.js";
-import { getDatabase, ref, set, onChildAdded, onChildRemoved, get, push, remove } from "https://www.gstatic.com/firebasejs/10.12.1/firebase-database.js";
+import { getDatabase, ref, set, onChildAdded, onChildRemoved, onChildChanged, get, push, remove } from "https://www.gstatic.com/firebasejs/10.12.1/firebase-database.js";
 import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.1/firebase-auth.js";
 
 // Firebase configuration object
@@ -67,6 +67,13 @@ class Post {
             if (postElement) {
               postElement.remove();
             }
+          });
+
+          // Listen for changes to posts
+          onChildChanged(postsRef, (snapshot) => {
+            const post = snapshot.val();
+            const postId = snapshot.key;
+            Post.updatePostInDOM(postId, post.title, post.content, post.image, userId);
           });
         });
       }
@@ -297,6 +304,35 @@ class Post {
     }).catch((error) => {
       console.error(error);
     });
+  }
+
+  static updatePostInDOM(postId, title, content, image, userId) {
+    const prefixedPostId = `post-${postId}`;
+    const postElement = document.getElementById(prefixedPostId);
+    if (postElement) {
+      const postDiv = postElement.querySelector(".user-posts");
+      const titleElement = postDiv.querySelector("h1");
+      const contentElement = postDiv.querySelector(".content");
+      const imgElement = postDiv.querySelector("img");
+
+      if (titleElement) titleElement.innerText = title;
+      if (contentElement) contentElement.innerText = content;
+
+      if (image) {
+        if (imgElement) {
+          imgElement.src = image;
+        } else {
+          const newImgElement = document.createElement("img");
+          newImgElement.src = image;
+          newImgElement.style.maxWidth = '100%';
+          postDiv.appendChild(newImgElement);
+        }
+      } else if (imgElement) {
+        imgElement.remove();
+      }
+    } else {
+      console.log("Post element not found in the DOM");
+    }
   }
 
   static editPost(prefixedPostId, title, content, image, userId, editButton, completeButton) {
@@ -544,11 +580,11 @@ class Post {
               content: newContent,
               image: newImage || postData.image,
             };
-  
+
             set(postRef, updatedData)
               .then(() => {
                 alert("Post updated successfully");
-  
+
                 // Ensure the element exists before proceeding
                 const postElement = document.getElementById(`post-${postId}`);
                 if (postElement) {
@@ -571,29 +607,28 @@ class Post {
       }
     });
   }
-  
-static deletePost(userId, postId) {
-  onAuthStateChanged(auth, (user) => {
-    if (user && user.uid === userId) {
-      remove(ref(db, `users/${userId}/posts/${postId}`))
-        .then(() => {
-          const postElement = document.getElementById(`post-${postId}`);
-          if (postElement) {
-            postElement.remove();
-            console.log("Post deleted successfully");
-          } else {
-            console.log("Post element not found in the DOM");
-          }
-        })
-        .catch((error) => {
-          console.error("Error deleting post:", error);
-        });
-    } else {
-      alert("You can only delete your own posts.");
-    }
-  });
-}
 
+  static deletePost(userId, postId) {
+    onAuthStateChanged(auth, (user) => {
+      if (user && user.uid === userId) {
+        remove(ref(db, `users/${userId}/posts/${postId}`))
+          .then(() => {
+            const postElement = document.getElementById(`post-${postId}`);
+            if (postElement) {
+              postElement.remove();
+              console.log("Post deleted successfully");
+            } else {
+              console.log("Post element not found in the DOM");
+            }
+          })
+          .catch((error) => {
+            console.error("Error deleting post:", error);
+          });
+      } else {
+        alert("You can only delete your own posts.");
+      }
+    });
+  }
 
   static saveComment(userId, postId, commentContent) {
     const commentId = Date.now().toString();
