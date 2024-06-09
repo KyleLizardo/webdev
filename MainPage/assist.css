@@ -270,7 +270,8 @@ section {
     align-self: center;
     /* Center the image horizontally */
     width: 100%;
-    height: auto;
+
+    object-fit: contain;
     /* Maintain aspect ratio */
     min-height: 12rem;
     max-height: 20rem;
