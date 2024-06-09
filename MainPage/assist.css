@@ -384,7 +384,7 @@ section {
 
     }
     .outer-post {
-        max-width: 40em;
+        max-width: 100%;
 
     }
     .user-posts {
