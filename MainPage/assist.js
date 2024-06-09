@@ -1,5 +1,5 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.1/firebase-app.js";
-import { getDatabase, ref, set, onChildAdded, onChildRemoved, get, push } from "https://www.gstatic.com/firebasejs/10.12.1/firebase-database.js";
+import { getDatabase, ref, set, onChildAdded, onChildRemoved, get, push, remove } from "https://www.gstatic.com/firebasejs/10.12.1/firebase-database.js";
 import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.1/firebase-auth.js";
 
 // Firebase configuration object
@@ -65,7 +65,7 @@ class Post {
             const post = snapshot.val();
             const postId = snapshot.key;
             if (!document.getElementById(postId)) {
-              Post.addPostToDOM(postId, post.title, post.content, post.image, userId);
+              Post.addPostToDOM(postId, post.title, post.content, post.image, userId, user.uid);
             }
           });
 
@@ -192,15 +192,19 @@ class Post {
     });
   }
 
-  static addPostToDOM(postId, title, content, image, userId) {
+  static addPostToDOM(postId, title, content, image, userId, currentUserId) {
     get(ref(db, `users/${userId}`)).then((snapshot) => {
       if (snapshot.exists()) {
         const userInfo = snapshot.val();
         const fullName = `${userInfo.firstName} ${userInfo.lastName}`;
 
+        const outerDiv = document.createElement("div");
+        outerDiv.classList.add("outer-post");
+        outerDiv.id = postId; // post id
+
         const postDiv = document.createElement("div");
         postDiv.classList.add("user-posts");
-        postDiv.id = postId;
+       
 
         const titlePost = document.createElement("h1");
         titlePost.innerText = title;
@@ -227,12 +231,24 @@ class Post {
           postImg.style.maxWidth = '100%';
           postDiv.appendChild(postImg);
         }
-
+        outerDiv.appendChild(postDiv);
         postDiv.appendChild(objContainer);
         objContainer.appendChild(userIdElement);
         objContainer.appendChild(commentButton);
 
-        document.getElementById('personal-container').prepend(postDiv);
+        // Create and append a delete button if the current user is the owner of the post
+        if (userId === currentUserId) {
+          const completeButton = document.createElement("button");
+          completeButton.innerText = "Complete";
+          completeButton.classList.add("complete-btn");
+
+          completeButton.addEventListener('click', () => {
+            Post.deletePost(userId, postId);
+          });
+          outerDiv.appendChild(completeButton); // Append the delete button
+        }
+
+        document.getElementById('personal-container').prepend(outerDiv);
 
         commentButton.addEventListener('click', () => {
           let commentInput = postDiv.querySelector('.comment-input');
@@ -278,6 +294,24 @@ class Post {
       }
     }).catch((error) => {
       console.error(error);
+    });
+  }
+
+  static deletePost(userId, postId) {
+    // Check if the current user is the owner of the post
+    onAuthStateChanged(auth, (user) => {
+      if (user && user.uid === userId) {
+        remove(ref(db, `users/${userId}/posts/${postId}`))
+          .then(() => {
+            document.getElementById(postId).remove();
+            console.log("Post deleted successfully");
+          })
+          .catch((error) => {
+            console.error("Error deleting post:", error);
+          });
+      } else {
+        alert("You can only delete your own posts.");
+      }
     });
   }
 
