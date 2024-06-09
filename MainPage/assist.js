@@ -21,21 +21,17 @@ const auth = getAuth(app);
 // Auth class for handling authentication-related functionality
 class Auth {
   static init() {
-    // Check credentials when the DOM content is loaded
     window.addEventListener('DOMContentLoaded', Auth.checkCredentials);
-    // Sign out when the sign out button is clicked
     document.getElementById('signoutbtn').addEventListener('click', Auth.signOut);
   }
 
   static checkCredentials() {
-    // Redirect to login page if user credentials are not found in session storage
     if (!sessionStorage.getItem("user-creds")) {
       window.location.href = '../loginpage/login.html';
     }
   }
 
   static signOut() {
-    // Remove user credentials and info from session storage and redirect to login page
     sessionStorage.removeItem("user-creds");
     sessionStorage.removeItem("user-info");
     window.location.href = '../loginpage/login.html';
@@ -45,34 +41,29 @@ class Auth {
 // Post class for handling post-related functionality
 class Post {
   static init() {
-    // Add event listeners for post interactions
     document.getElementById('request-textarea').addEventListener('focus', Post.showPostElements);
     document.getElementById('close').addEventListener('click', Post.hidePostElements);
     document.getElementById('firstimg').addEventListener('change', Post.previewImage);
     document.getElementById('post-btn').addEventListener("click", Post.addPost);
 
-    // Monitor authentication state changes
     onAuthStateChanged(auth, (user) => {
       if (user) {
-        // Listen to all users' posts
         const usersRef = ref(db, 'users');
         onChildAdded(usersRef, (snapshot) => {
           const userId = snapshot.key;
           const postsRef = ref(db, `users/${userId}/posts`);
 
-          // Add new posts to the DOM when added to the database
           onChildAdded(postsRef, (snapshot) => {
             const post = snapshot.val();
             const postId = snapshot.key;
-            if (!document.getElementById(postId)) {
+            if (!document.getElementById(`post-${postId}`)) {
               Post.addPostToDOM(postId, post.title, post.content, post.image, userId, user.uid);
             }
           });
 
-          // Remove post from DOM when it's removed from the database
           onChildRemoved(postsRef, (snapshot) => {
             const postId = snapshot.key;
-            const postElement = document.getElementById(postId);
+            const postElement = document.getElementById(`post-${postId}`);
             if (postElement) {
               postElement.remove();
             }
@@ -80,10 +71,12 @@ class Post {
         });
       }
     });
+
+    document.getElementById('saveLikesBtn').addEventListener('click', Post.saveLikes);
+    document.querySelector('.modal .close').addEventListener('click', Post.closeModal);
   }
 
   static showPostElements() {
-    // Show post-related elements when the textarea is focused
     document.getElementById('title-input').style.display = 'block';
     document.getElementById('close').style.display = 'block';
     document.getElementById('post-btn').style.display = 'block';
@@ -91,7 +84,6 @@ class Post {
   }
 
   static hidePostElements() {
-    // Hide post-related elements and reset their values
     document.getElementById('title-input').style.display = 'none';
     document.getElementById('request-textarea').style.height = '6rem';
     document.getElementById('close').style.display = 'none';
@@ -102,7 +94,6 @@ class Post {
   }
 
   static previewImage(event) {
-    // Display a preview of the selected image
     const file = event.target.files[0];
     const displayImage = document.getElementById('display-image');
 
@@ -135,7 +126,6 @@ class Post {
   }
 
   static addPost() {
-    // Check if the title and content are provided
     const reqTitle = document.getElementById('title-input').value;
     const reqTxt = document.getElementById('request-textarea').value;
 
@@ -144,7 +134,6 @@ class Post {
       return;
     }
 
-    // Add a new post if the user is authenticated
     onAuthStateChanged(auth, (user) => {
       if (user) {
         Post.savePost(user.uid);
@@ -155,7 +144,6 @@ class Post {
   }
 
   static savePost(userId) {
-    // Get post details and save the post to the database
     const reqTitle = document.getElementById('title-input').value;
     const reqTxt = document.getElementById('request-textarea').value;
     const imgElement = document.getElementById('display-image').querySelector('img');
@@ -178,11 +166,10 @@ class Post {
             alert("Data Added Successfully");
           })
           .catch((error) => {
-            console.error("Error saving post:", error); // Log error
+            console.error("Error saving post:", error);
             alert("Unsuccessful: " + error.message);
           });
 
-        // Hide post-related elements
         Post.hidePostElements();
       } else {
         console.log("No user data available");
@@ -193,6 +180,7 @@ class Post {
   }
 
   static addPostToDOM(postId, title, content, image, userId, currentUserId) {
+    const prefixedPostId = `post-${postId}`;
     get(ref(db, `users/${userId}`)).then((snapshot) => {
       if (snapshot.exists()) {
         const userInfo = snapshot.val();
@@ -200,11 +188,10 @@ class Post {
 
         const outerDiv = document.createElement("div");
         outerDiv.classList.add("outer-post");
-        outerDiv.id = postId; // post id
+        outerDiv.id = prefixedPostId;
 
         const postDiv = document.createElement("div");
         postDiv.classList.add("user-posts");
-       
 
         const titlePost = document.createElement("h1");
         titlePost.innerText = title;
@@ -236,16 +223,31 @@ class Post {
         objContainer.appendChild(userIdElement);
         objContainer.appendChild(commentButton);
 
-        // Create and append a delete button if the current user is the owner of the post
         if (userId === currentUserId) {
           const completeButton = document.createElement("button");
           completeButton.innerText = "Complete";
           completeButton.classList.add("complete-btn");
 
           completeButton.addEventListener('click', () => {
-            Post.deletePost(userId, postId);
+            Post.showLikesModal(postId, userId);
           });
-          outerDiv.appendChild(completeButton); // Append the delete button
+
+          const editButton = document.createElement("button");
+          editButton.innerText = "Edit";
+          editButton.classList.add("edit-btn");
+
+          editButton.addEventListener('click', () => {
+            if (editButton.innerText === "Edit") {
+              Post.editPost(prefixedPostId, title, content, image, userId, editButton, completeButton);
+              editButton.innerText = "Cancel";
+            } else {
+              Post.cancelEditPost(prefixedPostId, title, content, image, userId, currentUserId);
+              editButton.innerText = "Edit";
+            }
+          });
+
+          outerDiv.appendChild(completeButton);
+          outerDiv.appendChild(editButton);
         }
 
         document.getElementById('personal-container').prepend(outerDiv);
@@ -297,65 +299,324 @@ class Post {
     });
   }
 
-  static deletePost(userId, postId) {
-    // Check if the current user is the owner of the post
-    onAuthStateChanged(auth, (user) => {
-      if (user && user.uid === userId) {
-        remove(ref(db, `users/${userId}/posts/${postId}`))
-          .then(() => {
-            document.getElementById(postId).remove();
-            console.log("Post deleted successfully");
-          })
-          .catch((error) => {
-            console.error("Error deleting post:", error);
-          });
-      } else {
-        alert("You can only delete your own posts.");
+  static editPost(prefixedPostId, title, content, image, userId, editButton, completeButton) {
+    const outerDiv = document.getElementById(prefixedPostId);
+    const postDiv = outerDiv.querySelector(".user-posts");
+
+    const originalTitle = title;
+    const originalContent = content;
+    const originalImage = image;
+
+    postDiv.innerHTML = '';
+    completeButton.style.display = 'none';
+
+    const titleInput = document.createElement('input');
+    titleInput.type = 'text';
+    titleInput.value = title;
+    titleInput.classList.add('title-edit');
+
+    const contentTextarea = document.createElement('textarea');
+    contentTextarea.value = content;
+    contentTextarea.classList.add('content-edit');
+
+    const imageInput = document.createElement('input');
+    imageInput.type = 'file';
+    imageInput.classList.add('image-edit');
+    imageInput.id = 'file-input';
+    imageInput.style.display = 'none';
+
+    const label = document.createElement('label');
+    label.setAttribute('for', 'file-input');
+    label.innerHTML = '<i id="file" class="bx bxs-photo-album" style="cursor: pointer;"></i>';
+
+    const imageEditContainer = document.createElement('div');
+    imageEditContainer.id = 'image-edit';
+    imageEditContainer.appendChild(imageInput);
+    imageEditContainer.appendChild(label);
+
+    let imagePreview;
+    let removeImageButton;
+    let imageRemoved = false;
+
+    if (image) {
+      imagePreview = document.createElement('img');
+      imagePreview.src = image;
+      imagePreview.style.maxWidth = '100%';
+
+      removeImageButton = document.createElement('button');
+      removeImageButton.innerText = 'Remove Image';
+      removeImageButton.classList.add('remove-image-btn');
+      removeImageButton.addEventListener('click', () => {
+        imagePreview.remove();
+        removeImageButton.remove();
+        imageRemoved = true;
+      });
+
+      postDiv.appendChild(removeImageButton);
+      postDiv.appendChild(imagePreview);
+    }
+
+    imageInput.addEventListener('change', (event) => {
+      if (!imagePreview) {
+        imagePreview = document.createElement('img');
+        imagePreview.style.maxWidth = '100%';
+        postDiv.appendChild(imagePreview);
       }
+      if (removeImageButton) {
+        removeImageButton.remove();
+      }
+
+      const file = event.target.files[0];
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          imagePreview.src = e.target.result;
+          imagePreview.dataset.newImage = true;
+        };
+        reader.readAsDataURL(file);
+
+        removeImageButton = document.createElement('button');
+        removeImageButton.innerText = 'Remove Image';
+        removeImageButton.classList.add('remove-image-btn');
+        removeImageButton.addEventListener('click', () => {
+          imagePreview.remove();
+          removeImageButton.remove();
+          imageRemoved = true;
+        });
+
+        postDiv.insertBefore(removeImageButton, imagePreview);
+      }
+    });
+
+    const saveButton = document.createElement('button');
+    saveButton.innerText = 'Save';
+    saveButton.classList.add('save-edit-btn');
+
+    saveButton.addEventListener('click', () => {
+      const newTitle = titleInput.value.trim();
+      const newContent = contentTextarea.value.trim();
+      const newImage = (imagePreview && imagePreview.dataset.newImage) ? imagePreview.src : (imageRemoved ? null : image);
+
+      if (newTitle && newContent) {
+        const postId = prefixedPostId.replace('post-', ''); // Extract postId
+        Post.saveEditedPost(postId, newTitle, newContent, newImage, userId);
+      } else {
+        alert('Title and content cannot be empty');
+      }
+    });
+
+    postDiv.appendChild(titleInput);
+    postDiv.appendChild(contentTextarea);
+    postDiv.appendChild(imageEditContainer);
+    postDiv.appendChild(saveButton);
+
+    editButton.innerText = "Cancel";
+    editButton.removeEventListener('click', Post.editPost);
+    editButton.addEventListener('click', () => {
+      Post.cancelEditPost(prefixedPostId, originalTitle, originalContent, originalImage, userId, auth.currentUser.uid);
     });
   }
 
+  static cancelEditPost(prefixedPostId, originalTitle, originalContent, originalImage, userId, currentUserId) {
+    const postId = prefixedPostId.replace('post-', ''); // Extract postId
+    get(ref(db, `users/${userId}`)).then((snapshot) => {
+      if (snapshot.exists()) {
+        const userInfo = snapshot.val();
+        const fullName = `${userInfo.firstName} ${userInfo.lastName}`;
+
+        const postDiv = document.getElementById(prefixedPostId).querySelector(".user-posts");
+        postDiv.innerHTML = '';
+
+        const titlePost = document.createElement("h1");
+        titlePost.innerText = originalTitle;
+
+        const newPost = document.createElement("p");
+        newPost.classList.add("content");
+        newPost.innerText = originalContent;
+
+        const userIdElement = document.createElement("p");
+        userIdElement.innerText = `Posted by: ${fullName}`;
+
+        const objContainer = document.createElement("div");
+        objContainer.classList.add("userid-container");
+        postDiv.appendChild(titlePost);
+        postDiv.appendChild(newPost);
+
+        if (originalImage) {
+          const postImg = document.createElement('img');
+          postImg.src = originalImage;
+          postImg.style.maxWidth = '100%';
+          postDiv.appendChild(postImg);
+        }
+
+        postDiv.appendChild(objContainer);
+        objContainer.appendChild(userIdElement);
+
+        const commentButton = document.createElement("button");
+        commentButton.innerHTML = '<i class="ri-chat-4-line"></i>';
+        commentButton.classList.add("comment-btn");
+        objContainer.appendChild(commentButton);
+
+        commentButton.addEventListener('click', () => {
+          let commentInput = postDiv.querySelector('.comment-input');
+          let submitButton = postDiv.querySelector('.comment-submit');
+          let commentsSection = postDiv.querySelector('.comments-section');
+
+          if (commentInput && submitButton) {
+            commentInput.remove();
+            submitButton.remove();
+            if (commentsSection) {
+              commentsSection.remove();
+            }
+          } else {
+            commentInput = document.createElement('textarea');
+            commentInput.placeholder = 'Enter your comment...';
+            commentInput.classList.add('comment-input');
+
+            submitButton = document.createElement('button');
+            submitButton.innerText = 'Submit';
+            submitButton.classList.add('comment-submit');
+
+            submitButton.addEventListener('click', (event) => {
+              event.preventDefault();
+              const commentContent = commentInput.value.trim();
+              if (commentContent) {
+                Post.saveComment(userId, postId, commentContent, userInfo);
+                commentInput.value = '';
+              }
+            });
+
+            commentsSection = document.createElement('div');
+            commentsSection.classList.add('comments-section');
+            postDiv.appendChild(commentsSection);
+
+            postDiv.appendChild(commentInput);
+            postDiv.appendChild(submitButton);
+
+            Post.loadComments(userId, postId, commentsSection);
+          }
+        });
+
+        if (userId === currentUserId) {
+          const existingCompleteButton = document.querySelector(`#${prefixedPostId} .complete-btn`);
+          const existingEditButton = document.querySelector(`#${prefixedPostId} .edit-btn`);
+          if (existingCompleteButton) existingCompleteButton.remove();
+          if (existingEditButton) existingEditButton.remove();
+
+          const completeButton = document.createElement("button");
+          completeButton.innerText = "Complete";
+          completeButton.classList.add("complete-btn");
+
+          completeButton.addEventListener('click', () => {
+            Post.showLikesModal(postId, userId);
+          });
+
+          const editButton = document.createElement("button");
+          editButton.innerText = "Edit";
+          editButton.classList.add("edit-btn");
+
+          editButton.addEventListener('click', () => {
+            Post.editPost(prefixedPostId, originalTitle, originalContent, originalImage, userId, editButton, completeButton);
+          });
+
+          const outerDiv = document.getElementById(prefixedPostId);
+          outerDiv.appendChild(completeButton);
+          outerDiv.appendChild(editButton);
+        }
+      } else {
+        console.log("No user data available");
+      }
+    }).catch((error) => {
+      console.error(error);
+    });
+  }
+
+  static saveEditedPost(postId, newTitle, newContent, newImage, userId) {
+    const postRef = ref(db, `users/${userId}/posts/${postId}`);
+    get(postRef).then((snapshot) => {
+      if (snapshot.exists()) {
+        const postData = snapshot.val();
+        const updatedData = {
+          ...postData,
+          title: newTitle,
+          content: newContent,
+          image: newImage || postData.image,
+        };
+  
+        set(postRef, updatedData)
+          .then(() => {
+            alert("Post updated successfully");
+  
+            // Ensure the element exists before proceeding
+            const postElement = document.getElementById(`post-${postId}`);
+            if (postElement) {
+              Post.cancelEditPost(`post-${postId}`, newTitle, newContent, updatedData.image, userId, auth.currentUser.uid);
+            } else {
+              console.error("Post element not found in the DOM");
+            }
+          })
+          .catch((error) => {
+            console.error("Error updating post:", error);
+          });
+      } else {
+        console.error("Post not found.");
+      }
+    }).catch((error) => {
+      console.error("Error fetching post data:", error);
+    });
+  }
+
+static deletePost(userId, postId) {
+  onAuthStateChanged(auth, (user) => {
+    if (user && user.uid === userId) {
+      remove(ref(db, `users/${userId}/posts/${postId}`))
+        .then(() => {
+          const postElement = document.getElementById(`post-${postId}`);
+          if (postElement) {
+            postElement.remove();
+            console.log("Post deleted successfully");
+          } else {
+            console.log("Post element not found in the DOM");
+          }
+        })
+        .catch((error) => {
+          console.error("Error deleting post:", error);
+        });
+    } else {
+      alert("You can only delete your own posts.");
+    }
+  });
+}
+
+
   static saveComment(userId, postId, commentContent) {
-    // Generate a unique comment ID based on the current timestamp
     const commentId = Date.now().toString();
 
-    // Listen for changes in the authentication state
     onAuthStateChanged(auth, (user) => {
-      // Check if the user is authenticated
       if (user) {
-        // Fetch the authenticated user's information from the database
         get(ref(db, `users/${user.uid}`)).then((snapshot) => {
-          // Check if the user data exists in the snapshot
           if (snapshot.exists()) {
-            // Retrieve user information from the snapshot
             const userInfo = snapshot.val();
-            // Combine first name and last name to get the full name
             const fullName = `${userInfo.firstName} ${userInfo.lastName}`;
 
-            // Create a comment data object with necessary details
             const commentData = {
-              userId: user.uid, // ID of the authenticated user
-              content: commentContent, // Content of the comment
-              fullName: fullName, // Full name of the user
-              timestamp: Date.now() // Current timestamp
+              userId: user.uid,
+              content: commentContent,
+              fullName: fullName,
+              timestamp: Date.now()
             };
 
-            // Save the comment data under the specified user's post in the database
             set(ref(db, `users/${userId}/posts/${postId}/comments/${commentId}`), commentData)
               .then(() => {
-                // Log success message if the comment is saved successfully
                 console.log("Comment saved successfully");
               })
               .catch((error) => {
-                // Log error message if there's an issue saving the comment
                 console.error("Error saving comment:", error);
               });
           } else {
-            // Log message if no user data is available in the snapshot
             console.log("No user data available");
           }
         }).catch((error) => {
-          // Log error if there's an issue fetching the user data
           console.error(error);
         });
       }
@@ -379,14 +640,90 @@ class Post {
     commentElement.innerHTML = `<p>${comment.fullName}:</p><p>${comment.content}</p>`;
     postDiv.appendChild(commentElement);
   }
+
+  static showLikesModal(postId, userId) {
+    const modal = document.getElementById('likesModal');
+    modal.style.display = 'block';
+
+    const commentersList = document.getElementById('commenters-list');
+    commentersList.innerHTML = '';
+
+    const commentsRef = ref(db, `users/${userId}/posts/${postId}/comments`);
+    const uniqueUserIds = new Set();
+
+    get(commentsRef).then((snapshot) => {
+      if (snapshot.exists()) {
+        snapshot.forEach((childSnapshot) => {
+          const comment = childSnapshot.val();
+          if (!uniqueUserIds.has(comment.userId)) {
+            uniqueUserIds.add(comment.userId);
+            const commenterDiv = document.createElement('div');
+            commenterDiv.innerHTML = `
+              <label>
+                <input type="checkbox" value="${comment.userId}">${comment.fullName}
+              </label>
+            `;
+            commentersList.appendChild(commenterDiv);
+          }
+        });
+      } else {
+        Post.deletePost(userId, postId);
+        modal.style.display = 'none';
+      }
+    }).catch((error) => {
+      console.error(error);
+    });
+
+    modal.dataset.postId = postId;
+    modal.dataset.userId = userId;
+  }
+
+  static saveLikes() {
+    const modal = document.getElementById('likesModal');
+    const postId = modal.dataset.postId;
+    const userId = modal.dataset.userId;
+    const checkboxes = document.querySelectorAll('#commenters-list input[type="checkbox"]:checked');
+
+    checkboxes.forEach((checkbox) => {
+      const likedUserId = checkbox.value;
+      const likesRef = ref(db, `users/${likedUserId}/likes`);
+      const numLikesRef = ref(db, `users/${likedUserId}/numLikes`);
+
+      get(numLikesRef).then((snapshot) => {
+        let currentNumLikes = snapshot.val() || 0;
+
+        const newNumLikes = currentNumLikes + 1;
+
+        push(likesRef, {
+          postId: postId,
+          likedBy: userId,
+          timestamp: Date.now(),
+        }).then(() => {
+          set(numLikesRef, newNumLikes).catch((error) => {
+            console.error("Error updating number of likes:", error);
+          });
+        }).catch((error) => {
+          console.error("Error saving like details:", error);
+        });
+      }).catch((error) => {
+        console.error("Error fetching number of likes:", error);
+      });
+    });
+
+    modal.style.display = 'none';
+    Post.deletePost(userId, postId);
+  }
+
+  static closeModal() {
+    const modal = document.getElementById('likesModal');
+    modal.style.display = 'none';
+  }
 }
 
-// Initialize authentication and post functionalities when the DOM content is loaded
 document.addEventListener('DOMContentLoaded', () => {
   Auth.init();
   Post.init();
 
-  // Auto-expand the textarea as the user types
   document.getElementById('request-textarea').addEventListener('input', function () {
     this.style.height = 'auto';
     this.style.overflow = 'hidden';
