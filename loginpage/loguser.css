@@ -1,0 +1,109 @@
+body {
+    font-family: Arial, sans-serif;
+    background-color: #f0f8ff;
+    margin: 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+}
+
+.container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 90%;
+    max-width: 400px;
+    background-color: white;
+    border-radius: 8px;
+    padding: 20px; /* Increased padding for better spacing */
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+}
+
+form {
+    width: 100%;
+    padding: 5px;
+}
+
+.form-row {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 15px;
+}
+
+.form-group {
+    width: 100%;
+    position: relative;
+    margin-bottom: 15px;
+    text-align: left; /* Center-align input fields */
+}
+
+.form-group input {
+    width: calc(100% - 20px); /* Adjusted width */
+    padding: 10px;
+    border: 1px solid gray;
+    border-radius: 4px;
+    box-sizing: border-box;
+    font-size: 12px;
+    outline: none;
+    background: transparent;
+    text-align: left; /* Center-align text boxes */
+}
+
+
+.form-group input:focus {
+    border-color: #999;
+}
+
+.form-group label {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    padding: 0 5px;
+    background: white;
+    color: #999;
+    font-size: 12px;
+    pointer-events: none;
+    transition: 0.3s;
+}
+
+.form-group input:focus ~ label,
+.form-group input:not(:placeholder-shown) ~ label {
+    top: -10px;
+    left: 4px;
+    color: black;
+    font-size: 12px;
+    background-color: white;
+}
+
+.form-actions {
+    text-align: center;
+    margin-top: 20px;
+}
+
+.form-actions input {
+    background-color: gray;
+    color: white;
+    padding: 10px 30px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 13px;
+    width: auto;
+}
+
+.form-actions input:hover {
+    opacity: 0.8;
+}
+
+.sign-in-link {
+    text-align: center;
+    margin-top: 10px;
+    color: black;
+    font-size: 12px;
+}
+
+.sign-in-link a {
+    color: black;
+    text-decoration: underline;
+}
