@@ -12,7 +12,8 @@ body {
     background-color: var(--extra-light);
     font-family: 'Poppins', sans-serif;
     padding-top: 73px;
-    margin: 0; /* Ensure no margin on the body */
+    margin: 0;
+    /* Ensure no margin on the body */
 }
 
 a {
@@ -27,7 +28,8 @@ nav {
     background-color: var(--primary-color);
     background-image: linear-gradient(90deg, rgba(0, 212, 255, 1), rgba(119, 69, 210, 1));
     z-index: 100;
-    margin: 0; /* Ensure no margin on the nav */
+    margin: 0;
+    /* Ensure no margin on the nav */
 }
 
 .nav_content {
@@ -78,7 +80,8 @@ nav .checkbox i {
     gap: 1rem;
     list-style: none;
     margin: 0 auto;
-    padding: 0; /* Ensure no padding */
+    padding: 0;
+    /* Ensure no padding */
 }
 
 .nav_content ul li a {
@@ -97,13 +100,93 @@ ul li a:hover {
 }
 
 .signoutbtn {
-    color: white;
     cursor: pointer;
     position: absolute;
     right: 1rem;
     top: 50%;
     transform: translateY(-50%);
+    background: none;
+    border: none;
 }
+
+.container {
+    margin-top: 27px;
+    display: flex;
+    justify-content: center;
+    margin-bottom: 27px;
+}
+
+.form-container {
+    width: 90%;
+    max-width: 600px;
+    padding: 1rem;
+    box-shadow: rgba(100, 100, 111, 0.2) 0px 7px 29px 0px;
+    background-color: white;
+    border-radius: 5px;
+
+}
+#profileForm {
+display: flex;    
+    display: flex;
+    flex-direction: column;
+}
+
+#emailInp {
+background-color: white;    
+}
+
+.text-center {
+  text-align: center;
+  }
+
+  .mb-3 {
+    margin-bottom: 2rem;
+  }
+
+  .mb-4 {
+    margin-bottom: 1rem;
+  }
+
+  .form-floating {
+
+    margin-bottom: 1.2rem;
+  }
+
+  .form-floating input {
+    width: 90%;
+    padding: 1rem;
+    background-color: #f0f0f0;
+    border: 1px solid #ced4da;
+    border-radius: 4px;
+    margin-bottom: 4px;
+  }
+
+ 
+  .form-floating select {
+    width: 20%;
+    padding: 1rem;
+    border: 1px solid #ced4da;
+    border-radius: 4px;
+    margin-bottom: 4px;
+  }
+  
+  .form-floating label {
+    margin-left: 8px;
+    font-size: 11pt;
+    pointer-events: none;
+    transition: all 0.2s ease;
+  }
+
+  .btn {
+    background-color: var(--primary-color);
+    color: white;
+    border: none;
+    padding: 0.75rem 1.5rem;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+  }
+  
 
 @media (max-width: 800px) {
     nav .checkbox {
@@ -116,17 +199,18 @@ ul li a:hover {
         width: 100%;
         height: calc(100vh - 73px);
         top: 73px;
-        left: -100%; /* Correct this part */
+        left: -100%;
+        /* Correct this part */
         background-color: var(--primary-color);
         flex-direction: column;
         justify-content: center;
         align-items: center;
-        gap: 3rem;       
+        gap: 3rem;
         transition: 0.3s ease;
     }
 
-    nav #check:checked ~ ul {
-       left: 0;
+    nav #check:checked~ul {
+        left: 0;
     }
 
     .signoutbtn {
@@ -137,9 +221,4 @@ ul li a:hover {
         text-align: center;
         width: 100%;
     }
-}
-
-.user-posts {
-    max-width: 22rem;
-    margin: auto;
 }

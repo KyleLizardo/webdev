@@ -1,17 +1,13 @@
 <!doctype html>
 <html lang="en">
-
 <head>
-    <!-- Required meta tags -->
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="stylesheet" href="profile.css">
     <link href="https://cdn.jsdelivr.net/npm/remixicon@4.2.0/fonts/remixicon.css" rel="stylesheet">
     <link href="https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css" rel="stylesheet">
-   
     <title>Bayanihan</title>
 </head>
-
 <body>
     <nav>
         <div class="nav_content">
@@ -22,23 +18,124 @@
                 <li><a href="/MainPage/likes.html"><i class="ri-thumb-up-line"></i></a></li>
                 <li><a href="/MainPage/assist.html"><i class="ri-service-line"></i></a></li>      
                 <li><a href="#"><i class="ri-user-line"></i></a></li>
-            <li><a class="signoutbtn">Sign Out</a></ul>
+                <li><a class="signoutbtn">Sign Out</a></li>
             </ul>
-     
         </div>
     </nav>
 
-    <!-- main -->
+    <div class="container">
+        <div class="form-container">
+            <form id="ProfileForm">
+                <h2 class="text-center mb-4">Edit Profile</h2>
+                <div class="form-row">
+                    <div class="col">
+                        <div class="form-floating">
+                            <input type="text" class="form-control" id="fnameInp" placeholder="Enter First Name" required>
+                            <label for="fnameInp">First Name</label>
+                        </div>
+                    </div>
+                    <div class="col">
+                        <div class="form-floating">
+                            <input type="text" class="form-control" id="lnameInp" placeholder="Enter Last Name" required>
+                            <label for="lnameInp">Last Name</label>
+                        </div>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="col">
+                        <div class="form-floating">
+                            <input type="date" class="form-control" id="bdateInp" placeholder="Enter Date of Birth" required>
+                            <label for="bdateInp">Date of Birth</label>
+                        </div>
+                    </div>
+                    <div class="col">
+                        <div class="form-floating">
+                            <select class="form-select" id="genderInp" aria-label="Floating label select example" required>
+                                <option value="" disabled selected hidden></option>
+                                <option value="Male">Male</option>
+                                <option value="Female">Female</option>
+                                <option value="Other">Other</option>
+                            </select>
+                            <label for="genderInp">Gender</label>
+                        </div>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="col">
+                        <div class="form-floating">
+                            <input type="tel" class="form-control" id="contactInp" placeholder="Contact Number" oninput="formatPhoneNumber(event)" required>
+                            <label for="contactInp">Mobile Number</label>
+                        </div>
+                    </div>
+                    <div class="col">
+                        <div class="form-floating">
+                            <input type="email" class="form-control" id="emailInp" placeholder="name@example.com" readonly>
+                            <label for="emailInp">Email Address</label>
+                        </div>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="col">
+                        <div class="form-floating">
+                            <input type="password" class="form-control" id="passwordInp" placeholder="Password" required>
+                            <label for="passwordInp">Password</label>
+                        </div>
+                    </div>
+                    <div class="col">
+                        <div class="form-floating">
+                            <input type="password" class="form-control" id="confirmPasswordInp" placeholder="Confirm Password" required>
+                            <label for="confirmPasswordInp">Confirm Password</label>
+                        </div>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="col">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="showPasswordCheck">
+                            <label class="form-check-label" for="showPasswordCheck">Show Password</label>
+                        </div>
+                    </div>
+                </div>
+                <div class="form-actions text-center mb-3">
+                    <button type="submit" class="btn">Update Profile</button>
+                </div>
+            </form>
 
+            <form id="AddressForm">
+                <h2 class="text-center mb-4">Address</h2>
+                <div class="form-row">
+                    <div class="col">
+                        <div class="form-floating">
+                            <input type="text" class="form-control" id="municipalityInp" name="municipality" placeholder="Enter Municipality" required>
+                            <label for="municipalityInp">City/Municipality</label>
+                        </div>
+                    </div>
+                </div>
 
+                <div class="form-row">
+                    <div class="col">
+                        <div class="form-floating">
+                            <input type="text" class="form-control" id="brgyInp" name="barangay" placeholder="Enter Barangay" required>
+                            <label for="brgyInp">Barangay</label>
+                        </div>
+                    </div>
+                </div>
 
-    
-    <script src="profile.js" type="module" defer> </script>
- 
+                <div class="form-row">
+                    <div class="col">
+                        <div class="form-floating">
+                            <input type="text" class="form-control" id="streetInp" name="street" placeholder="Enter Street" required>
+                            <label for="streetInp">Street</label>
+                        </div>
+                    </div>
+                </div>
+                <div class="form-actions text-center mb-3">
+                    <button type="submit" class="btn">Update Address</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="profile.js" type="module" defer></script>
 </body>
-
 </html>
-
-<!--dump
-   <h2 id="msg"></h2>
-   <h2 id="greet"></h2>

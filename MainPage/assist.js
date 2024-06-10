@@ -638,7 +638,6 @@ class Post {
       }
     });
   }
-
   static saveComment(userId, postId, commentContent) {
     const commentId = Date.now().toString();
 
@@ -693,20 +692,20 @@ class Post {
 
   static showLikesModal(postId, userId) {
     const modal = document.getElementById('likesModal');
-    modal.style.display = 'block';
-
     const commentersList = document.getElementById('commenters-list');
     commentersList.innerHTML = '';
-
+  
     const commentsRef = ref(db, `users/${userId}/posts/${postId}/comments`);
     const uniqueUserIds = new Set();
-
+  
     get(commentsRef).then((snapshot) => {
       if (snapshot.exists()) {
+        let hasOtherComments = false;
         snapshot.forEach((childSnapshot) => {
           const comment = childSnapshot.val();
-          if (!uniqueUserIds.has(comment.userId)) {
+          if (comment.userId !== auth.currentUser.uid) {
             uniqueUserIds.add(comment.userId);
+            hasOtherComments = true;
             const commenterDiv = document.createElement('div');
             commenterDiv.innerHTML = `
               <label>
@@ -716,54 +715,81 @@ class Post {
             commentersList.appendChild(commenterDiv);
           }
         });
+  
+        if (!hasOtherComments) {
+          Post.deletePost(userId, postId);
+          return;
+        }
+  
+        modal.style.display = 'block';
       } else {
         Post.deletePost(userId, postId);
-        modal.style.display = 'none';
       }
     }).catch((error) => {
       console.error(error);
     });
-
+  
     modal.dataset.postId = postId;
     modal.dataset.userId = userId;
   }
+
 
   static saveLikes() {
     const modal = document.getElementById('likesModal');
     const postId = modal.dataset.postId;
     const userId = modal.dataset.userId;
     const checkboxes = document.querySelectorAll('#commenters-list input[type="checkbox"]:checked');
-
+  
+    // Check if the user is trying to like their own post
+    if (userId === auth.currentUser.uid) {
+      alert("You cannot like your own post.");
+      modal.style.display = 'none';
+      return;
+    }
+  
+    // Check if the only commenter is the user themselves or if there are no comments
+    const hasOtherComments = Array.from(checkboxes).some(checkbox => checkbox.value !== auth.currentUser.uid);
+  
+    if (!hasOtherComments) {
+      alert("No other users have commented or only you have commented. The post will be deleted.");
+      modal.style.display = 'none';
+      Post.deletePost(userId, postId);
+      return;
+    }
+  
+    // Process likes for other users' comments
     checkboxes.forEach((checkbox) => {
       const likedUserId = checkbox.value;
-      const likesRef = ref(db, `users/${likedUserId}/likes`);
-      const numLikesRef = ref(db, `users/${likedUserId}/numLikes`);
-
-      get(numLikesRef).then((snapshot) => {
-        let currentNumLikes = snapshot.val() || 0;
-
-        const newNumLikes = currentNumLikes + 1;
-
-        push(likesRef, {
-          postId: postId,
-          likedBy: userId,
-          timestamp: Date.now(),
-        }).then(() => {
-          set(numLikesRef, newNumLikes).catch((error) => {
-            console.error("Error updating number of likes:", error);
+      if (likedUserId !== auth.currentUser.uid) {
+        const likesRef = ref(db, `users/${likedUserId}/likes`);
+        const numLikesRef = ref(db, `users/${likedUserId}/numLikes`);
+  
+        get(numLikesRef).then((snapshot) => {
+          let currentNumLikes = snapshot.val() || 0;
+  
+          const newNumLikes = currentNumLikes + 1;
+  
+          push(likesRef, {
+            postId: postId,
+            likedBy: userId,
+            timestamp: Date.now(),
+          }).then(() => {
+            set(numLikesRef, newNumLikes).catch((error) => {
+              console.error("Error updating number of likes:", error);
+            });
+          }).catch((error) => {
+            console.error("Error saving like details:", error);
           });
         }).catch((error) => {
-          console.error("Error saving like details:", error);
+          console.error("Error fetching number of likes:", error);
         });
-      }).catch((error) => {
-        console.error("Error fetching number of likes:", error);
-      });
+      }
     });
-
+  
     modal.style.display = 'none';
     Post.deletePost(userId, postId);
   }
-
+  
   static closeModal() {
     const modal = document.getElementById('likesModal');
     modal.style.display = 'none';

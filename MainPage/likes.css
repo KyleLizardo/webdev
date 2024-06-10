@@ -105,6 +105,66 @@ ul li a:hover {
     transform: translateY(-50%);
 }
 
+.main-container {
+    width: 100%;
+    height: 100vh;
+    display: flex;    
+    align-items: center;
+    flex-direction: column;
+
+}
+
+#border-container {
+    display: flex; /* Use flexbox */
+    flex-direction: column; /* Stack items vertically */
+    align-items: center; /* Center items horizontally */
+    width: 90vw;
+    height: auto;
+    justify-content: center;
+    padding: 1rem; /* Add padding if needed */
+}
+
+ul.container {
+    margin: 0; /* Remove margin from the ul */
+    padding: 0; /* Remove padding from the ul */
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center; /* Center list items horizontally */
+}
+
+/* Additional styles for the list items */
+.container li {
+    display: flex;
+    justify-content: space-between; /* Add space between name and likes */
+    align-items: center; /* Align items vertically */
+    width: 100%;
+    max-width: 500px; /* Adjust the max-width */
+    padding: 10px;
+    background-color: white;
+    margin-bottom: 10px;
+    border-radius: 5px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    list-style-type: none; /* Remove list style */
+
+}
+
+.label {
+    display: flex; 
+    justify-content: space-between; 
+    width: 100%; /* Ensure it covers full width */
+    max-width: 500px;
+    margin: 1rem;
+}
+
+.container li .name {
+    text-align: left; /* Align name to the left */
+}
+
+.container li .likes {
+    text-align: right; /* Align likes to the right */
+}
+
 @media (max-width: 800px) {
     nav .checkbox {
         display: flex;
@@ -121,7 +181,6 @@ ul li a:hover {
         flex-direction: column;
         justify-content: center;
         align-items: center;
-        gap: 3rem;
         transition: 0.3s ease;
     }
 
@@ -137,45 +196,6 @@ ul li a:hover {
         text-align: center;
         width: 100%;
     }
-}
-
-.user-posts {
-    max-width: 22rem;
-    margin: auto;
-}
-
-main {
-    display: flex;    
-    align-items: center;
-    justify-content: center;
-    flex-direction: column;
-}
-
-/* Additional styles for the list items */
-
-.container {
-gap: 2rem;    
-}
-
-.container li {
-    gap: 50rem;
-    display: flex;
-    justify-content: space-between; /* Add space between name and likes */
-    width: 100%;
-
-    padding: 10px;
-    background-color: white;
-    margin-bottom: 10px;
-    border-radius: 5px;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-}
-
-.container li span {
-    display: block;
-    font-size: 16pt;
-}
-.name {
-font-weight: bolder;
 }
 
 
