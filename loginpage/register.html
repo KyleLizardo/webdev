@@ -13,7 +13,6 @@
     <script src="userr.js" defer></script>
 
     <title>Bayanihan</title>
-
 </head>
 
 <body>
@@ -133,7 +132,7 @@
     <!-- Optional JavaScript; choose one of the two! -->
     <!-- Option 1: Bootstrap Bundle with Popper -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js"
-        integrity="sha384-MrcW6ZMFYlzcLA8Nl+NtUVF0oA7MsXsP1UyJoMp4YLEuNSfAP+JcXn/tWtIaxVXM"
+        integrity="sha384-MrcW6ZMFYlzcLA8Nl+NtUVF0sA7MsXsP1UyJoMp4YLEuNSfAP+JcXn/tWtIaxVXM"
         crossorigin="anonymous"></script>
 
     <script type="module">
@@ -141,7 +140,6 @@
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.1/firebase-app.js";
         import { getDatabase, set, ref } from "https://www.gstatic.com/firebasejs/10.12.1/firebase-database.js";
         import { getAuth, createUserWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.12.1/firebase-auth.js";
-
         import { getAnalytics } from "https://www.gstatic.com/firebasejs/10.12.1/firebase-analytics.js";
 
         // Your web app's Firebase configuration
@@ -162,7 +160,7 @@
 
         // Get references to the input fields
         const FnameInp = document.getElementById('fnameInp');
-        const lnameInp = document.getElementById('lnameInp');
+        const LnameInp = document.getElementById('lnameInp');
         const BdateInp = document.getElementById('bdateInp');
         const GenderInp = document.getElementById('genderInp');
         const ContactInp = document.getElementById('contactInp');
@@ -174,16 +172,16 @@
         const MunicipalityInp = document.getElementById('municipalityInp');
         const ShowPasswordCheck = document.getElementById('showPasswordCheck');
 
-        // Function to handle "form submission"
+        // Function to handle form submission
         const RegisterUser = evt => {
             evt.preventDefault(); // Prevent any default behavior
 
             createUserWithEmailAndPassword(auth, EmailInp.value, PassInp.value)
                 .then(credentials => {
                     const user = credentials.user;
-                    set(ref(db, 'users/' + user.uid), {
+                    return set(ref(db, 'users/' + user.uid), {
                         firstName: FnameInp.value,
-                        lastName: lnameInp.value,
+                        lastName: LnameInp.value,
                         birthDate: BdateInp.value,
                         gender: GenderInp.value,
                         contact: ContactInp.value,
@@ -191,14 +189,15 @@
                         street: StreetInp.value,
                         brgy: BrgyInp.value,
                         municipality: MunicipalityInp.value
+                    })
+                    .then(() => {
+                        alert("User registered successfully!");
+                        window.location.href = '../loginpage/login.html'; // Updated path
                     });
-
-                    alert("User registered successfully!");
                 })
                 .catch(error => {
                     alert(error.message);
-                    console.log(error.code);
-                    console.log(error.message);
+                    console.error("Error during registration: ", error.code, error.message);
                 });
         };
 
@@ -215,7 +214,5 @@
 
         const analytics = getAnalytics(app);
     </script>
-
 </body>
-
 </html>
