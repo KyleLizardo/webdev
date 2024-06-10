@@ -22,7 +22,7 @@ const auth = getAuth(app);
 class Auth {
   static init() {
     window.addEventListener('DOMContentLoaded', Auth.checkCredentials);
-    document.getElementById('signoutbtn').addEventListener('click', Auth.signOut);
+    document.querySelector('.signoutbtn').addEventListener('click', Auth.signOut); // <-for class ->  for id  document.getElementById('signoutbtn').addEventListener('click', Auth.signOut);
   }
 
   static checkCredentials() {
@@ -171,6 +171,14 @@ class Post {
         })
           .then(() => {
             alert("Data Added Successfully");
+            document.getElementById('title-input').value = "";
+            document.getElementById('request-textarea').value = "";
+            if (imgElement) {
+                imgElement.remove();
+            }
+
+            Post.hidePostElements();
+
           })
           .catch((error) => {
             console.error("Error saving post:", error);
@@ -181,6 +189,7 @@ class Post {
       } else {
         console.log("No user data available");
       }
+      
     }).catch((error) => {
       console.error(error);
     });

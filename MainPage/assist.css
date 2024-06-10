@@ -44,6 +44,7 @@ nav {
     display: flex;
     align-items: center;
     justify-content: space-between;
+    position: relative; /* Add position relative to use absolute positioning inside */
 }
 
 .nav_content .logo a {
@@ -102,8 +103,14 @@ ul li a:hover {
     color: var(--primary-light);
 }
 
-#signoutbtn {
+/* New CSS rule for signoutbtn */
+.signoutbtn {
+    color: white;
     cursor: pointer;
+    position: absolute; /* Position it absolutely */
+    right: 1rem; /* Adjust the distance from the right */
+    top: 50%; /* Center vertically within the nav */
+    transform: translateY(-50%); /* Adjust for vertical centering */
 }
 
 section {
@@ -404,7 +411,8 @@ section {
 
 }
 
-@media (max-width: 430px) {
+/* Adjustments for smaller screens */
+@media (max-width: 500px) {
     nav .checkbox {
         display: flex;
         justify-content: end;
@@ -418,7 +426,7 @@ section {
         top: 73px;
         background-color: var(--primary-color);
         flex-direction: column;
-        justify-content: center;
+        justify-content: center;           
         gap: 3rem;
     }
 
@@ -427,7 +435,12 @@ section {
     }
 
     .user-posts {
-
         max-width: 22rem;
+    }
+
+    .signoutbtn {
+       position: relative;
+       right: auto;
+    
     }
 }
