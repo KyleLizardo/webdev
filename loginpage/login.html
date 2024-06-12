@@ -1,3 +1,4 @@
+
 <!doctype html>
 <html lang="en">
 
@@ -34,6 +35,11 @@
       </div>
       <button type="submit" class="btn btn-primary">Login</button>
       <p class="mt-3">No account? <a href="register.html">Sign Up</a></p>
+
+      <button type="button" class="btn btn-danger w-100 mt-3" id="google-login-button">
+        <img src="https://img.icons8.com/color/16/000000/google-logo.png"/> Sign in with Google
+      </button>
+      
     </form>
   </div>
 
@@ -46,8 +52,8 @@
   <script type="module">
     // Import the functions you need from the SDKs you need
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.1/firebase-app.js";
-    import { getDatabase, get, ref, child } from "https://www.gstatic.com/firebasejs/10.12.1/firebase-database.js";
-    import { getAuth, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.12.1/firebase-auth.js";
+    import { getDatabase, get, ref, child, set } from "https://www.gstatic.com/firebasejs/10.12.1/firebase-database.js";
+    import { getAuth, signInWithEmailAndPassword, GoogleAuthProvider, signInWithPopup } from "https://www.gstatic.com/firebasejs/10.12.1/firebase-auth.js";
     import { getAnalytics } from "https://www.gstatic.com/firebasejs/10.12.1/firebase-analytics.js";
 
     // Your web app's Firebase configuration
@@ -65,13 +71,16 @@
     const app = initializeApp(firebaseConfig);
     const db = getDatabase();
     const auth = getAuth(app);
+    auth.languageCode = 'en';
+    const provider = new GoogleAuthProvider();
+   
     const dbref = ref(db);  // take the reference 
 
     const EmailInp = document.getElementById('emailInp');
     const PassInp = document.getElementById('passwordInp');
     const MainForm = document.getElementById('MainForm');
-
     const showPasswordCheck = document.getElementById('showPasswordCheck');
+    const googleLoginButton = document.getElementById('google-login-button');
 
     showPasswordCheck.addEventListener('change', () => {
       PassInp.type = showPasswordCheck.checked ? 'text' : 'password';
@@ -84,12 +93,12 @@
         .then((credentials) => {
           console.log(credentials); //if it successfully login the console will show the credentials 
           //fetch information
-          get(child(dbref, 'users/' + credentials.user.uid)).then((snaphot) => {
-            if (snaphot.exists) {
+          get(child(dbref, 'users/' + credentials.user.uid)).then((snapshot) => {
+            if (snapshot.exists) {
               //you can use the local storage if you want a user to permanently login
               sessionStorage.setItem("user-info", JSON.stringify({ //stringify means that object will get converted into a string // will saving into the session storage
-                firstName: snaphot.val().firstName,
-                lastName: snaphot.val().lastName
+                firstName: snapshot.val().firstName,
+                lastName: snapshot.val().lastName
               }))
               sessionStorage.setItem("user-creds", JSON.stringify(credentials.user));
               window.location.href = '../MainPage/assist.html'; // Updated path
@@ -102,6 +111,39 @@
           console.log(error.message);
         })
     };
+
+    googleLoginButton.addEventListener('click', () => {
+      signInWithPopup(auth, provider)
+        .then((result) => {
+          // The signed-in user info.
+          const user = result.user;
+          console.log(user);
+          
+          // Save user info in the database
+          set(ref(db, 'users/' + user.uid), {
+            firstName: user.displayName.split(' ')[0],
+            lastName: user.displayName.split(' ').slice(1).join(' '),
+            email: user.email
+          }).then(() => {
+            // Fetch user info and store it in session storage
+            sessionStorage.setItem("user-info", JSON.stringify({
+              firstName: user.displayName.split(' ')[0],
+              lastName: user.displayName.split(' ').slice(1).join(' '),
+              email: user.email
+            }));
+            sessionStorage.setItem("user-creds", JSON.stringify(user));
+            window.location.href = '../MainPage/profile.html';
+          }).catch((error) => {
+            console.error("Error saving user data:", error);
+            alert("Error saving user data: " + error.message);
+          });
+        }).catch((error) => {
+          // Handle Errors here.
+          const errorMessage = error.message;
+          console.error("Error during sign in:", errorMessage);
+          alert("Failed to sign in with Google: " + errorMessage);
+        });
+    });
 
     // Add event listener to the form id - MainForm
     document.getElementById('MainForm').addEventListener('submit', SignInUser);

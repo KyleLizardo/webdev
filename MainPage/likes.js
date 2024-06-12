@@ -1,6 +1,6 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.1/firebase-app.js";
 import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/10.12.1/firebase-database.js";
-import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.1/firebase-auth.js";
+import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.1/firebase-auth.js";
 
 // Firebase configuration object
 const firebaseConfig = {
@@ -33,7 +33,7 @@ class Auth {
   }
 
   static signOut() {
-    auth.signOut().then(() => {
+    signOut(auth).then(() => {
       window.location.href = '../loginpage/login.html';
     }).catch((error) => {
       console.error('Error signing out:', error);

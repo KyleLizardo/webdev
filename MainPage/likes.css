@@ -179,7 +179,7 @@ ul.container {
         left: -100%; /* Correct this part */
         background-color: var(--primary-color);
         flex-direction: column;
-        justify-content: center;
+        padding-top: 1rem;
         align-items: center;
         transition: 0.3s ease;
     }

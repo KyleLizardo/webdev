@@ -8,7 +8,7 @@
     <link rel="stylesheet" href="assist.css">
     <link href="https://cdn.jsdelivr.net/npm/remixicon@4.2.0/fonts/remixicon.css" rel="stylesheet">
     <link href="https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css" rel="stylesheet">
-   
+
     <title>Bayanihan</title>
 </head>
 
@@ -20,11 +20,12 @@
             <input type="checkbox" name="check" id="check">
             <ul>
                 <li><a href="/MainPage/likes.html"><i class="ri-thumb-up-line"></i></a></li>
-                <li><a href="#"><i class="ri-service-line"></i></a></li>      
+                <li><a href="#"><i class="ri-service-line"></i></a></li>
                 <li><a href="/MainPage/profile.html"><i class="ri-user-line"></i></a></li>
-            <li><a class="signoutbtn">Sign Out</a></ul>
+                <li><a class="signoutbtn">Sign Out</a>
             </ul>
-     
+            </ul>
+
         </div>
     </nav>
 
@@ -33,36 +34,45 @@
         <section id="form-container">
             <div id="message-container">
                 <i id="close" class="ri-close-line btn" style="display: none;"></i>
-                <input type="text" id="title-input" class="title-input" placeholder="Enter title" style="display: none;" required>
+                <input type="text" id="title-input" class="title-input" placeholder="Enter title" style="display: none;"
+                    required>
                 <textarea id="request-textarea" class="textarea" placeholder="Enter your request..."></textarea>
                 <div id="display-image" style="display: none;"></div>
-               
-                <!-- below subj--> 
+
+                <!-- below subj-->
                 <div class="below-subj">
-                   <input type="file" name="img" id="firstimg" style="display: none;"> 
-                   <label for="firstimg"><i id="file" class='bx bxs-photo-album' style="display: none;"></i></label>
-                   <button type="post" id="post-btn" class="btn" style="display: none;">Post</button>
+                    <input type="file" name="img" id="firstimg" style="display: none;">
+                    <label for="firstimg"><i id="file" class='bx bxs-photo-album' style="display: none;"></i></label>
+                    <button type="post" id="post-btn" class="btn" style="display: none;">Post</button>
                 </div>
             </div>
-            
-            <div id="personal-container">             
-                <!-- post container-->  
+            <div class= "filter-container">
+                <div class="select">
+                  <select>
+                    <option value="1" id="All">All</option>
+                    <option value="2" id="Personal">Personal</option>
+                  </select>
+                </div>
+            </div>
+
+            <div id="personal-container">
+                <!-- post container-->
             </div>
         </section>
     </main>
 
     <div id="likesModal" class="modal">
         <div class="modal-content">
-          <span class="close">&times;</span>
-          <h2>Select Users to Like</h2>
-          <div id="commenters-list"></div>
-          <button id="saveLikesBtn">Save Likes</button>
+            <span class="close">&times;</span>
+            <h2>Select Users to Like</h2>
+            <div id="commenters-list"></div>
+            <button id="saveLikesBtn">Save Likes</button>
         </div>
-      </div>
+    </div>
 
-    
+
     <script src="assist.js" type="module" defer> </script>
- 
+
 </body>
 
 </html>

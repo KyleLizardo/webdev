@@ -1,3 +1,4 @@
+
 function formatPhoneNumber(event) {
     // Get the input value and remove any non-numeric characters
     let input = event.target.value.replace(/\D/g, ''); // Remove non-numeric characters
@@ -38,3 +39,4 @@ function formatPhoneNumber(event) {
 
 // Example usage: attach the function to an input field
 document.getElementById('phone-input').addEventListener('input', formatPhoneNumber);
+

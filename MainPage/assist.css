@@ -13,6 +13,10 @@
     --text-light: #6b7280;
     --extra-light: #f5f5f5;
     --text-dark: #212121;
+    --background-gradient: linear-gradient(178deg, #ffff33 10%, #3333ff);
+    --gray: #34495e;
+    --darkgray: #2c3e50;
+
 }
 
 a {
@@ -231,6 +235,60 @@ section {
     font-size: 2rem;
     cursor: pointer;
     color: #1f2937;
+}
+.filter-container {
+    margin: 0 auto; /* Center horizontally */
+    max-width: 42rem; /* Set a specific maximum width */
+    padding: 1rem;
+}
+
+select {
+ 
+    outline: 0;
+    /* Reset Select */
+    appearance: none;
+    border: 0;
+    /* Personalize */
+    flex: 1;
+    padding: 0 1em;
+    color: var(--primary-color);
+
+    background-image: none;
+    cursor: pointer;
+  }
+  /* Remove IE arrow */
+  select::-ms-expand {
+    display: none;
+  }
+  /* Custom Select wrapper */
+  .select {
+    border-radius: 1rem;
+    position: relative;
+    display: flex;
+    width: 10em;
+    height: 3em;
+ 
+    overflow: hidden;
+  }
+  /* Arrow */
+  .select::after {
+    content: '\25BC';
+    color: white;
+    position: absolute;
+    top: 0;
+    right: 0;
+    padding: 1em;
+    background-color: var(--primary-color);
+    transition: .25s all ease;
+    pointer-events: none;
+  }
+  /* Transition */
+  .select:hover::after {
+    color: rgb(208, 220, 255);
+  }
+  option {
+    font-size: 1rem; /* Adjust the font size as needed */
+    padding: 0.5rem 2rem; /* Adjust the padding as needed */
 }
 
 #personal-container {

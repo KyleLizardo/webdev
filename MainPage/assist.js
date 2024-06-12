@@ -53,6 +53,32 @@ class Post {
           const userId = snapshot.key;
           const postsRef = ref(db, `users/${userId}/posts`);
 
+          // Fetch all posts once
+          get(postsRef).then((snapshot) => {
+            if (snapshot.exists()) {
+              const posts = [];
+              snapshot.forEach((childSnapshot) => {
+                posts.push({
+                  postId: childSnapshot.key,
+                  ...childSnapshot.val(),
+                  userId: userId
+                });
+              });
+
+              // Sort posts by timestamp in descending order
+              posts.sort((a, b) => b.postId - a.postId);
+
+              // Clear existing posts in the DOM
+              document.getElementById('personal-container').innerHTML = '';
+
+              // Add sorted posts to the DOM
+              posts.forEach((post) => {
+                Post.addPostToDOM(post.postId, post.title, post.content, post.image, post.userId, user.uid);
+              });
+            }
+          });
+
+          // Listen for new posts added in real-time
           onChildAdded(postsRef, (snapshot) => {
             const post = snapshot.val();
             const postId = snapshot.key;
@@ -61,6 +87,7 @@ class Post {
             }
           });
 
+          // Listen for posts removed in real-time
           onChildRemoved(postsRef, (snapshot) => {
             const postId = snapshot.key;
             const postElement = document.getElementById(`post-${postId}`);
@@ -69,7 +96,7 @@ class Post {
             }
           });
 
-          // Listen for changes to posts
+          // Listen for changes to posts in real-time
           onChildChanged(postsRef, (snapshot) => {
             const post = snapshot.val();
             const postId = snapshot.key;
@@ -78,6 +105,7 @@ class Post {
         });
       }
     });
+
 
     document.getElementById('saveLikesBtn').addEventListener('click', Post.saveLikes);
     document.querySelector('.modal .close').addEventListener('click', Post.closeModal);

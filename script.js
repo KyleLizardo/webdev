@@ -1,3 +1,4 @@
+
 const primaryHeader = document.querySelector('.primary-header')
 const scrollWatcher = document.createElement('div');
  
@@ -10,6 +11,16 @@ const navObserver = new IntersectionObserver((entries) => {
 
 navObserver.observe(scrollWatcher)
 
+document.addEventListener('DOMContentLoaded', function () {
+    const menuToggle = document.querySelector('.menu-toggle');
+    const navList = document.querySelector('.nav-list');
+
+    menuToggle.addEventListener('click', function () {
+        // Toggle the 'active' class on both menuToggle and navList
+        menuToggle.classList.toggle('active');
+        navList.classList.toggle('active');
+    });
+});
 
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -32,6 +43,8 @@ document.addEventListener('DOMContentLoaded', () => {
         link.addEventListener('click', (e) => {
             navLinks.forEach((link) => link.classList.remove('active'));
             e.target.classList.add('active');
+
+            
         });
     });
 });
