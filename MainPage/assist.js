@@ -48,43 +48,84 @@ class Post {
 
     onAuthStateChanged(auth, (user) => {
       if (user) {
-        const usersRef = ref(db, 'users');
-        onChildAdded(usersRef, (snapshot) => {
-          const userId = snapshot.key;
-          const postsRef = ref(db, `users/${userId}/posts`);
-
-          onChildAdded(postsRef, (snapshot) => {
-            const post = snapshot.val();
-            const postId = snapshot.key;
-            if (!document.getElementById(`post-${postId}`)) {
-              Post.addPostToDOM(postId, post.title, post.content, post.image, userId, user.uid);
-            }
-          });
-
-          onChildRemoved(postsRef, (snapshot) => {
-            const postId = snapshot.key;
-            const postElement = document.getElementById(`post-${postId}`);
-            if (postElement) {
-              postElement.remove();
-            }
-          });
-
-          // Listen for changes to posts
-          onChildChanged(postsRef, (snapshot) => {
-            const post = snapshot.val();
-            const postId = snapshot.key;
-            Post.updatePostInDOM(postId, post.title, post.content, post.image, userId);
-          });
-        });
+        Post.fetchAndDisplayPosts(user);
       }
     });
-
-
 
     document.getElementById('saveLikesBtn').addEventListener('click', Post.saveLikes);
     document.querySelector('.modal .close').addEventListener('click', Post.closeModal);
   }
 
+  static async fetchAndDisplayPosts(user) {
+    const usersRef = ref(db, 'users');
+    let allPosts = [];
+    let addedPostIds = new Set();
+
+    const usersSnapshot = await get(usersRef);
+    if (usersSnapshot.exists()) {
+      const usersData = usersSnapshot.val();
+      for (const userId in usersData) {
+        if (usersData.hasOwnProperty(userId)) {
+          const postsRef = ref(db, `users/${userId}/posts`);
+          const postsSnapshot = await get(postsRef);
+          if (postsSnapshot.exists()) {
+            const postsData = postsSnapshot.val();
+            for (const postId in postsData) {
+              if (postsData.hasOwnProperty(postId) && !addedPostIds.has(postId)) {
+                addedPostIds.add(postId);
+                allPosts.push({ userId, postId, post: postsData[postId] });
+              }
+            }
+          }
+        }
+      }
+    }
+
+    Post.renderPosts(allPosts, user.uid);
+
+    // Set up listeners for changes
+    onChildAdded(usersRef, (snapshot) => {
+      const userId = snapshot.key;
+      const postsRef = ref(db, `users/${userId}/posts`);
+      onChildAdded(postsRef, (snapshot) => {
+        const post = snapshot.val();
+        const postId = snapshot.key;
+        if (!addedPostIds.has(postId)) {
+          addedPostIds.add(postId);
+          allPosts.push({ userId, postId, post });
+          Post.renderPosts(allPosts, user.uid);
+        }
+      });
+
+      onChildRemoved(postsRef, (snapshot) => {
+        const postId = snapshot.key;
+        addedPostIds.delete(postId);
+        allPosts = allPosts.filter(post => post.postId !== postId);
+        Post.renderPosts(allPosts, user.uid);
+      });
+
+      onChildChanged(postsRef, (snapshot) => {
+        const post = snapshot.val();
+        const postId = snapshot.key;
+        const postIndex = allPosts.findIndex(post => post.postId === postId);
+        if (postIndex !== -1) {
+          allPosts[postIndex].post = post;
+          Post.renderPosts(allPosts, user.uid);
+        }
+      });
+    });
+  }
+
+  static renderPosts(posts, currentUserId) {
+    const postsContainer = document.getElementById('personal-container');
+    postsContainer.innerHTML = '';
+
+    posts.sort((a, b) => a.postId.localeCompare(b.postId));
+
+    posts.forEach(({ postId, post, userId }) => {
+      Post.addPostToDOM(postId, post.title, post.content, post.image, userId, currentUserId);
+    });
+  }
   static showPostElements() {
     document.getElementById('title-input').style.display = 'block';
     document.getElementById('close').style.display = 'block';
@@ -161,162 +202,161 @@ class Post {
     const postId = Date.now().toString();
 
     get(ref(db, `users/${userId}`)).then((snapshot) => {
-        if (snapshot.exists()) {
-            const userInfo = snapshot.val();
-            set(ref(db, `users/${userId}/posts/${postId}`), {
-                userId: userId,
-                firstName: userInfo.firstName,
-                lastName: userInfo.lastName,
-                title: reqTitle,
-                content: reqTxt,
-                image: imgSrc,
-                timestamp: Date.now()  // Add timestamp here
-            })
-            .then(() => {
-                alert("Data Added Successfully");
-                document.getElementById('title-input').value = "";
-                document.getElementById('request-textarea').value = "";
-                if (imgElement) {
-                    imgElement.remove();
-                }
-
-                Post.hidePostElements();
-
-            })
-            .catch((error) => {
-                console.error("Error saving post:", error);
-                alert("Unsuccessful: " + error.message);
-            });
+      if (snapshot.exists()) {
+        const userInfo = snapshot.val();
+        set(ref(db, `users/${userId}/posts/${postId}`), {
+          userId: userId,
+          firstName: userInfo.firstName,
+          lastName: userInfo.lastName,
+          title: reqTitle,
+          content: reqTxt,
+          image: imgSrc
+        })
+          .then(() => {
+            alert("Data Added Successfully");
+            document.getElementById('title-input').value = "";
+            document.getElementById('request-textarea').value = "";
+            if (imgElement) {
+                imgElement.remove();
+            }
 
             Post.hidePostElements();
-        } else {
-            console.log("No user data available");
-        }
-    }).catch((error) => {
-        console.error(error);
-    });
-}
 
-
-static addPostToDOM(postId, title, content, image, userId, currentUserId) {
-  const prefixedPostId = `post-${postId}`;
-  get(ref(db, `users/${userId}`)).then((snapshot) => {
-      if (snapshot.exists()) {
-          const userInfo = snapshot.val();
-          const fullName = `${userInfo.firstName} ${userInfo.lastName}`;
-
-          const outerDiv = document.createElement("div");
-          outerDiv.classList.add("outer-post");
-          outerDiv.id = prefixedPostId;
-
-          const postDiv = document.createElement("div");
-          postDiv.classList.add("user-posts");
-
-          const titlePost = document.createElement("h1");
-          titlePost.innerText = title;
-
-          const newPost = document.createElement("p");
-          newPost.classList.add("content");
-          newPost.innerText = content;
-
-          const userIdElement = document.createElement("p");
-          userIdElement.innerText = `Posted by: ${fullName}`;
-
-          const objContainer = document.createElement("div");
-          objContainer.classList.add("userid-container");
-          postDiv.appendChild(titlePost);
-          postDiv.appendChild(newPost);
-
-          const commentButton = document.createElement("button");
-          commentButton.innerHTML = '<i class="ri-chat-4-line"></i>';
-          commentButton.classList.add("comment-btn");
-
-          if (image) {
-              const postImg = document.createElement('img');
-              postImg.src = image;
-              postImg.style.maxWidth = '100%';
-              postDiv.appendChild(postImg);
-          }
-          outerDiv.appendChild(postDiv);
-          postDiv.appendChild(objContainer);
-          objContainer.appendChild(userIdElement);
-          objContainer.appendChild(commentButton);
-
-          if (userId === currentUserId) {
-              const completeButton = document.createElement("button");
-              completeButton.innerText = "Complete";
-              completeButton.classList.add("complete-btn");
-
-              completeButton.addEventListener('click', () => {
-                  Post.showLikesModal(postId, userId);
-              });
-
-              const editButton = document.createElement("button");
-              editButton.innerText = "Edit";
-              editButton.classList.add("edit-btn");
-
-              editButton.addEventListener('click', () => {
-                  if (editButton.innerText === "Edit") {
-                      Post.editPost(prefixedPostId, title, content, image, userId, editButton, completeButton);
-                      editButton.innerText = "Cancel";
-                  } else {
-                      Post.cancelEditPost(prefixedPostId, title, content, image, userId, currentUserId);
-                      editButton.innerText = "Edit";
-                  }
-              });
-
-              outerDiv.appendChild(completeButton);
-              outerDiv.appendChild(editButton);
-          }
-
-          document.getElementById('personal-container').prepend(outerDiv); // Add new post to the top
-
-          commentButton.addEventListener('click', () => {
-              let commentInput = postDiv.querySelector('.comment-input');
-              let submitButton = postDiv.querySelector('.comment-submit');
-              let commentsSection = postDiv.querySelector('.comments-section');
-
-              if (commentInput && submitButton) {
-                  commentInput.remove();
-                  submitButton.remove();
-                  if (commentsSection) {
-                      commentsSection.remove();
-                  }
-              } else {
-                  commentInput = document.createElement('textarea');
-                  commentInput.placeholder = 'Enter your comment...';
-                  commentInput.classList.add('comment-input');
-
-                  submitButton = document.createElement('button');
-                  submitButton.innerText = 'Submit';
-                  submitButton.classList.add('comment-submit');
-
-                  submitButton.addEventListener('click', (event) => {
-                      event.preventDefault();
-                      const commentContent = commentInput.value.trim();
-                      if (commentContent) {
-                          Post.saveComment(userId, postId, commentContent, userInfo);
-                          commentInput.value = '';
-                      }
-                  });
-
-                  commentsSection = document.createElement('div');
-                  commentsSection.classList.add('comments-section');
-                  postDiv.appendChild(commentsSection);
-
-                  postDiv.appendChild(commentInput);
-                  postDiv.appendChild(submitButton);
-
-                  Post.loadComments(userId, postId, commentsSection);
-              }
+          })
+          .catch((error) => {
+            console.error("Error saving post:", error);
+            alert("Unsuccessful: " + error.message);
           });
+
+        Post.hidePostElements();
       } else {
-          console.log("No user data available");
+        console.log("No user data available");
       }
-  }).catch((error) => {
+      
+    }).catch((error) => {
       console.error(error);
-  });
-}
+    });
+  }
+
+  static addPostToDOM(postId, title, content, image, userId, currentUserId) {
+    const prefixedPostId = `post-${postId}`;
+    get(ref(db, `users/${userId}`)).then((snapshot) => {
+      if (snapshot.exists()) {
+        const userInfo = snapshot.val();
+        const fullName = `${userInfo.firstName} ${userInfo.lastName}`;
+
+        const outerDiv = document.createElement("div");
+        outerDiv.classList.add("outer-post");
+        outerDiv.id = prefixedPostId;
+
+        const postDiv = document.createElement("div");
+        postDiv.classList.add("user-posts");
+
+        const titlePost = document.createElement("h1");
+        titlePost.innerText = title;
+
+        const newPost = document.createElement("p");
+        newPost.classList.add("content");
+        newPost.innerText = content;
+
+        const userIdElement = document.createElement("p");
+        userIdElement.innerText = `Posted by: ${fullName}`;
+
+        const objContainer = document.createElement("div");
+        objContainer.classList.add("userid-container");
+        postDiv.appendChild(titlePost);
+        postDiv.appendChild(newPost);
+
+        const commentButton = document.createElement("button");
+        commentButton.innerHTML = '<i class="ri-chat-4-line"></i>';
+        commentButton.classList.add("comment-btn");
+
+        if (image) {
+          const postImg = document.createElement('img');
+          postImg.src = image;
+          postImg.style.maxWidth = '100%';
+          postDiv.appendChild(postImg);
+        }
+        outerDiv.appendChild(postDiv);
+        postDiv.appendChild(objContainer);
+        objContainer.appendChild(userIdElement);
+        objContainer.appendChild(commentButton);
+
+        if (userId === currentUserId) {
+          const completeButton = document.createElement("button");
+          completeButton.innerText = "Complete";
+          completeButton.classList.add("complete-btn");
+
+          completeButton.addEventListener('click', () => {
+            Post.showLikesModal(postId, userId);
+          });
+
+          const editButton = document.createElement("button");
+          editButton.innerText = "Edit";
+          editButton.classList.add("edit-btn");
+
+          editButton.addEventListener('click', () => {
+            if (editButton.innerText === "Edit") {
+              Post.editPost(prefixedPostId, title, content, image, userId, editButton, completeButton);
+              editButton.innerText = "Cancel";
+            } else {
+              Post.cancelEditPost(prefixedPostId, title, content, image, userId, currentUserId);
+              editButton.innerText = "Edit";
+            }
+          });
+
+          outerDiv.appendChild(completeButton);
+          outerDiv.appendChild(editButton);
+        }
+
+        document.getElementById('personal-container').prepend(outerDiv);
+
+        commentButton.addEventListener('click', () => {
+          let commentInput = postDiv.querySelector('.comment-input');
+          let submitButton = postDiv.querySelector('.comment-submit');
+          let commentsSection = postDiv.querySelector('.comments-section');
+
+          if (commentInput && submitButton) {
+            commentInput.remove();
+            submitButton.remove();
+            if (commentsSection) {
+              commentsSection.remove();
+            }
+          } else {
+            commentInput = document.createElement('textarea');
+            commentInput.placeholder = 'Enter your comment...';
+            commentInput.classList.add('comment-input');
+
+            submitButton = document.createElement('button');
+            submitButton.innerText = 'Submit';
+            submitButton.classList.add('comment-submit');
+
+            submitButton.addEventListener('click', (event) => {
+              event.preventDefault();
+              const commentContent = commentInput.value.trim();
+              if (commentContent) {
+                Post.saveComment(userId, postId, commentContent, userInfo);
+                commentInput.value = '';
+              }
+            });
+
+            commentsSection = document.createElement('div');
+            commentsSection.classList.add('comments-section');
+            postDiv.appendChild(commentsSection);
+
+            postDiv.appendChild(commentInput);
+            postDiv.appendChild(submitButton);
+
+            Post.loadComments(userId, postId, commentsSection);
+          }
+        });
+      } else {
+        console.log("No user data available");
+      }
+    }).catch((error) => {
+      console.error(error);
+    });
+  }
 
   static updatePostInDOM(postId, title, content, image, userId) {
     const prefixedPostId = `post-${postId}`;
@@ -350,47 +390,47 @@ static addPostToDOM(postId, title, content, image, userId, currentUserId) {
   static editPost(prefixedPostId, title, content, image, userId, editButton, completeButton) {
     const outerDiv = document.getElementById(prefixedPostId);
     const postDiv = outerDiv.querySelector(".user-posts");
-  
+
     const originalTitle = title;
     const originalContent = content;
     const originalImage = image;
-  
+
     postDiv.innerHTML = '';
     completeButton.style.display = 'none';
-  
+
     const titleInput = document.createElement('input');
     titleInput.type = 'text';
     titleInput.value = title;
     titleInput.classList.add('title-edit');
-  
+
     const contentTextarea = document.createElement('textarea');
     contentTextarea.value = content;
     contentTextarea.classList.add('content-edit');
-  
+
     const imageInput = document.createElement('input');
     imageInput.type = 'file';
     imageInput.classList.add('image-edit');
     imageInput.id = 'file-input';
     imageInput.style.display = 'none';
-  
+
     const label = document.createElement('label');
     label.setAttribute('for', 'file-input');
     label.innerHTML = '<i id="file" class="bx bxs-photo-album" style="cursor: pointer;"></i>';
-  
+
     const imageEditContainer = document.createElement('div');
     imageEditContainer.id = 'image-edit';
     imageEditContainer.appendChild(imageInput);
     imageEditContainer.appendChild(label);
-  
+
     let imagePreview;
     let removeImageButton;
     let imageRemoved = false;
-  
+
     if (image) {
       imagePreview = document.createElement('img');
       imagePreview.src = image;
       imagePreview.style.maxWidth = '100%';
-  
+
       removeImageButton = document.createElement('button');
       removeImageButton.innerText = 'Remove Image';
       removeImageButton.classList.add('remove-image-btn');
@@ -399,11 +439,11 @@ static addPostToDOM(postId, title, content, image, userId, currentUserId) {
         removeImageButton.remove();
         imageRemoved = true;
       });
-  
+
       postDiv.appendChild(removeImageButton);
       postDiv.appendChild(imagePreview);
     }
-  
+
     imageInput.addEventListener('change', (event) => {
       if (!imagePreview) {
         imagePreview = document.createElement('img');
@@ -413,7 +453,7 @@ static addPostToDOM(postId, title, content, image, userId, currentUserId) {
       if (removeImageButton) {
         removeImageButton.remove();
       }
-  
+
       const file = event.target.files[0];
       if (file) {
         const reader = new FileReader();
@@ -422,7 +462,7 @@ static addPostToDOM(postId, title, content, image, userId, currentUserId) {
           imagePreview.dataset.newImage = true;
         };
         reader.readAsDataURL(file);
-  
+
         removeImageButton = document.createElement('button');
         removeImageButton.innerText = 'Remove Image';
         removeImageButton.classList.add('remove-image-btn');
@@ -431,20 +471,20 @@ static addPostToDOM(postId, title, content, image, userId, currentUserId) {
           removeImageButton.remove();
           imageRemoved = true;
         });
-  
+
         postDiv.insertBefore(removeImageButton, imagePreview);
       }
     });
-  
+
     const saveButton = document.createElement('button');
     saveButton.innerText = 'Save';
     saveButton.classList.add('save-edit-btn');
-  
+
     saveButton.addEventListener('click', () => {
       const newTitle = titleInput.value.trim();
       const newContent = contentTextarea.value.trim();
       const newImage = (imagePreview && imagePreview.dataset.newImage) ? imagePreview.src : (imageRemoved ? null : image);
-  
+
       if (newTitle && newContent) {
         const postId = prefixedPostId.replace('post-', ''); // Extract postId
         Post.saveEditedPost(postId, newTitle, newContent, newImage, userId);
@@ -452,12 +492,12 @@ static addPostToDOM(postId, title, content, image, userId, currentUserId) {
         alert('Title and content cannot be empty');
       }
     });
-  
+
     postDiv.appendChild(titleInput);
     postDiv.appendChild(contentTextarea);
     postDiv.appendChild(imageEditContainer);
     postDiv.appendChild(saveButton);
-  
+
     editButton.innerText = "Cancel";
     editButton.removeEventListener('click', Post.editPost);
     editButton.addEventListener('click', () => {
@@ -592,11 +632,11 @@ static addPostToDOM(postId, title, content, image, userId, currentUserId) {
               content: newContent,
               image: newImage || postData.image,
             };
-  
+
             set(postRef, updatedData)
               .then(() => {
                 alert("Post updated successfully");
-  
+
                 // Ensure the element exists before proceeding
                 const postElement = document.getElementById(`post-${postId}`);
                 if (postElement) {
