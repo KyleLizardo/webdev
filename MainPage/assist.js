@@ -53,6 +53,22 @@ class Post {
           const userId = snapshot.key;
           const postsRef = ref(db, `users/${userId}/posts`);
 
+          get(postsRef).then((snapshot) => {
+            if (snapshot.exists()) {
+              const posts = [];
+              snapshot.forEach(childSnapshot => {
+                posts.push({ id: childSnapshot.key, ...childSnapshot.val() });
+              });
+              // Sort posts by postId
+              posts.sort((a, b) => b.id - a.id);
+
+              // Add sorted posts to DOM
+              posts.forEach(post => {
+                Post.addPostToDOM(post.id, post.title, post.content, post.image, userId, user.uid);
+              });
+            }
+          });
+
           onChildAdded(postsRef, (snapshot) => {
             const post = snapshot.val();
             const postId = snapshot.key;
@@ -69,7 +85,6 @@ class Post {
             }
           });
 
-          // Listen for changes to posts
           onChildChanged(postsRef, (snapshot) => {
             const post = snapshot.val();
             const postId = snapshot.key;
@@ -266,13 +281,9 @@ class Post {
                 outerDiv.appendChild(editButton);
             }
 
-            // Ensure the latest post is added to the top
+            // Prepend the new post to the container
             const personalContainer = document.getElementById('personal-container');
-            if (personalContainer.firstChild) {
-                personalContainer.insertBefore(outerDiv, personalContainer.firstChild);
-            } else {
-                personalContainer.appendChild(outerDiv);
-            }
+            personalContainer.prepend(outerDiv);
 
             commentButton.addEventListener('click', () => {
                 let commentInput = postDiv.querySelector('.comment-input');
@@ -320,6 +331,7 @@ class Post {
         console.error(error);
     });
 }
+
 
   static updatePostInDOM(postId, title, content, image, userId) {
     const prefixedPostId = `post-${postId}`;
