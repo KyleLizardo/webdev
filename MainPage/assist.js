@@ -66,7 +66,7 @@ class Post {
               });
 
               // Sort posts by timestamp in descending order
-              posts.sort((a, b) => b.postId - a.postId);
+              posts.sort((a, b) => b.timestamp - a.timestamp);
 
               // Clear existing posts in the DOM
               document.getElementById('personal-container').innerHTML = '';
@@ -105,7 +105,6 @@ class Post {
         });
       }
     });
-
 
     document.getElementById('saveLikesBtn').addEventListener('click', Post.saveLikes);
     document.querySelector('.modal .close').addEventListener('click', Post.closeModal);
@@ -183,9 +182,10 @@ class Post {
     const reqTxt = document.getElementById('request-textarea').value;
     const imgElement = document.getElementById('display-image').querySelector('img');
     const imgSrc = imgElement ? imgElement.src : '';
-
+  
     const postId = Date.now().toString();
-
+    const timestamp = Date.now(); // Add this line to get the current timestamp
+  
     get(ref(db, `users/${userId}`)).then((snapshot) => {
       if (snapshot.exists()) {
         const userInfo = snapshot.val();
@@ -195,24 +195,25 @@ class Post {
           lastName: userInfo.lastName,
           title: reqTitle,
           content: reqTxt,
-          image: imgSrc
+          image: imgSrc,
+          timestamp: timestamp // Add this line to store the timestamp
         })
           .then(() => {
             alert("Data Added Successfully");
             document.getElementById('title-input').value = "";
             document.getElementById('request-textarea').value = "";
             if (imgElement) {
-                imgElement.remove();
+              imgElement.remove();
             }
-
+  
             Post.hidePostElements();
-
+  
           })
           .catch((error) => {
             console.error("Error saving post:", error);
             alert("Unsuccessful: " + error.message);
           });
-
+  
         Post.hidePostElements();
       } else {
         console.log("No user data available");
