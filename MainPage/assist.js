@@ -1,5 +1,5 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.1/firebase-app.js";
-import { getDatabase, ref, set, onChildAdded, onChildRemoved, onChildChanged, get, push, remove } from "https://www.gstatic.com/firebasejs/10.12.1/firebase-database.js";
+import { getDatabase, ref, set, onChildAdded, onChildRemoved, onChildChanged, get, query, orderByChild } from "https://www.gstatic.com/firebasejs/10.12.1/firebase-database.js";
 import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.1/firebase-auth.js";
 
 // Firebase configuration object
@@ -51,23 +51,7 @@ class Post {
         const usersRef = ref(db, 'users');
         onChildAdded(usersRef, (snapshot) => {
           const userId = snapshot.key;
-          const postsRef = ref(db, `users/${userId}/posts`);
-
-          get(postsRef).then((snapshot) => {
-            if (snapshot.exists()) {
-              const posts = [];
-              snapshot.forEach(childSnapshot => {
-                posts.push({ id: childSnapshot.key, ...childSnapshot.val() });
-              });
-              // Sort posts by postId
-              posts.sort((a, b) => b.id - a.id);
-
-              // Add sorted posts to DOM
-              posts.forEach(post => {
-                Post.addPostToDOM(post.id, post.title, post.content, post.image, userId, user.uid);
-              });
-            }
-          });
+          const postsRef = query(ref(db, `users/${userId}/posts`), orderByChild('timestamp'));
 
           onChildAdded(postsRef, (snapshot) => {
             const post = snapshot.val();
@@ -85,6 +69,7 @@ class Post {
             }
           });
 
+          // Listen for changes to posts
           onChildChanged(postsRef, (snapshot) => {
             const post = snapshot.val();
             const postId = snapshot.key;
@@ -158,7 +143,27 @@ class Post {
 
     onAuthStateChanged(auth, (user) => {
       if (user) {
-        Post.savePost(user.uid);
+        const postId = Date.now().toString();
+        const postRef = ref(db, `users/${user.uid}/posts/${postId}`);
+        const postData = {
+          userId: user.uid,
+          title: reqTitle,
+          content: reqTxt,
+          image: '',
+          timestamp: Date.now() // Add a timestamp field
+        };
+
+        set(postRef, postData)
+         .then(() => {
+            alert("Data Added Successfully");
+            document.getElementById('title-input').value = "";
+            document.getElementById('request-textarea').value = "";
+            Post.hidePostElements();
+          })
+         .catch((error) => {
+            console.error("Error saving post:", error);
+            alert("Unsuccessful: " + error.message);
+          });
       } else {
         console.log("User is not logged in");
       }
@@ -204,7 +209,7 @@ class Post {
       } else {
         console.log("No user data available");
       }
-      
+
     }).catch((error) => {
       console.error(error);
     });
@@ -212,6 +217,8 @@ class Post {
 
   static addPostToDOM(postId, title, content, image, userId, currentUserId) {
     const prefixedPostId = `post-${postId}`;
+    const postRef = ref(db, `users/${userId}/posts/${postId}`);
+
     get(ref(db, `users/${userId}`)).then((snapshot) => {
         if (snapshot.exists()) {
             const userInfo = snapshot.val();
@@ -236,12 +243,9 @@ class Post {
 
             const objContainer = document.createElement("div");
             objContainer.classList.add("userid-container");
+
             postDiv.appendChild(titlePost);
             postDiv.appendChild(newPost);
-
-            const commentButton = document.createElement("button");
-            commentButton.innerHTML = '<i class="ri-chat-4-line"></i>';
-            commentButton.classList.add("comment-btn");
 
             if (image) {
                 const postImg = document.createElement('img');
@@ -249,10 +253,16 @@ class Post {
                 postImg.style.maxWidth = '100%';
                 postDiv.appendChild(postImg);
             }
-            outerDiv.appendChild(postDiv);
+
+            const commentButton = document.createElement("button");
+            commentButton.innerHTML = '<i class="ri-chat-4-line"></i>';
+            commentButton.classList.add("comment-btn");
+
             postDiv.appendChild(objContainer);
             objContainer.appendChild(userIdElement);
             objContainer.appendChild(commentButton);
+
+            outerDiv.appendChild(postDiv);
 
             if (userId === currentUserId) {
                 const completeButton = document.createElement("button");
@@ -281,9 +291,7 @@ class Post {
                 outerDiv.appendChild(editButton);
             }
 
-            // Prepend the new post to the container
-            const personalContainer = document.getElementById('personal-container');
-            personalContainer.prepend(outerDiv);
+            document.getElementById('personal-container').prepend(outerDiv);
 
             commentButton.addEventListener('click', () => {
                 let commentInput = postDiv.querySelector('.comment-input');
@@ -309,7 +317,7 @@ class Post {
                         event.preventDefault();
                         const commentContent = commentInput.value.trim();
                         if (commentContent) {
-                            Post.saveComment(userId, postId, commentContent, userInfo);
+                            Post.saveComment(userId, postId, commentContent);
                             commentInput.value = '';
                         }
                     });
@@ -330,8 +338,7 @@ class Post {
     }).catch((error) => {
         console.error(error);
     });
-}
-
+  }
 
   static updatePostInDOM(postId, title, content, image, userId) {
     const prefixedPostId = `post-${postId}`;
@@ -544,7 +551,7 @@ class Post {
               event.preventDefault();
               const commentContent = commentInput.value.trim();
               if (commentContent) {
-                Post.saveComment(userId, postId, commentContent, userInfo);
+                Post.saveComment(userId, postId, commentContent);
                 commentInput.value = '';
               }
             });
@@ -712,10 +719,10 @@ class Post {
     const modal = document.getElementById('likesModal');
     const commentersList = document.getElementById('commenters-list');
     commentersList.innerHTML = '';
-  
+
     const commentsRef = ref(db, `users/${userId}/posts/${postId}/comments`);
     const uniqueUserIds = new Set();
-  
+
     get(commentsRef).then((snapshot) => {
       if (snapshot.exists()) {
         let hasOtherComments = false;
@@ -733,12 +740,12 @@ class Post {
             commentersList.appendChild(commenterDiv);
           }
         });
-  
+
         if (!hasOtherComments) {
           Post.deletePost(userId, postId);
           return;
         }
-  
+
         modal.style.display = 'block';
       } else {
         Post.deletePost(userId, postId);
@@ -746,80 +753,39 @@ class Post {
     }).catch((error) => {
       console.error(error);
     });
-  
+
     modal.dataset.postId = postId;
     modal.dataset.userId = userId;
   }
-  
-  
-  static saveLikes() {
-    const modal = document.getElementById('likesModal');
-    const postId = modal.dataset.postId;
-    const userId = modal.dataset.userId;
-    const checkboxes = document.querySelectorAll('#commenters-list input[type="checkbox"]:checked');
-  
-    // Process likes for other users' comments
-    checkboxes.forEach((checkbox) => {
-      const likedUserId = checkbox.value;
-      if (likedUserId !== auth.currentUser.uid) {
-        const likesRef = ref(db, `users/${likedUserId}/likes`);
-        const numLikesRef = ref(db, `users/${likedUserId}/numLikes`);
-  
-        get(numLikesRef).then((snapshot) => {
-          let currentNumLikes = snapshot.val() || 0;
-  
-          const newNumLikes = currentNumLikes + 1;
-  
-          push(likesRef, {
-            postId: postId,
-            likedBy: userId,
-            timestamp: Date.now(),
-          }).then(() => {
-            set(numLikesRef, newNumLikes).catch((error) => {
-              console.error("Error updating number of likes:", error);
-            });
-          }).catch((error) => {
-            console.error("Error saving like details:", error);
-          });
-        }).catch((error) => {
-          console.error("Error fetching number of likes:", error);
-        });
-      }
-    });
-  
-    modal.style.display = 'none';
-  }
-  
-  static saveLikes() {
-    const modal = document.getElementById('likesModal');
-    const postId = modal.dataset.postId;
-    const userId = modal.dataset.userId;
-    const checkboxes = document.querySelectorAll('#commenters-list input[type="checkbox"]:checked');
-  
 
-  
+  static saveLikes() {
+    const modal = document.getElementById('likesModal');
+    const postId = modal.dataset.postId;
+    const userId = modal.dataset.userId;
+    const checkboxes = document.querySelectorAll('#commenters-list input[type="checkbox"]:checked');
+
     // Check if the only commenter is the user themselves or if there are no comments
     const hasOtherComments = Array.from(checkboxes).some(checkbox => checkbox.value !== auth.currentUser.uid);
-  
+
     if (!hasOtherComments) {
       alert("No other users have commented or only you have commented. The post will be deleted.");
       modal.style.display = 'none';
       Post.deletePost(userId, postId);
       return;
     }
-  
+
     // Process likes for other users' comments
     checkboxes.forEach((checkbox) => {
       const likedUserId = checkbox.value;
       if (likedUserId !== auth.currentUser.uid) {
         const likesRef = ref(db, `users/${likedUserId}/likes`);
         const numLikesRef = ref(db, `users/${likedUserId}/numLikes`);
-  
+
         get(numLikesRef).then((snapshot) => {
           let currentNumLikes = snapshot.val() || 0;
-  
+
           const newNumLikes = currentNumLikes + 1;
-  
+
           push(likesRef, {
             postId: postId,
             likedBy: userId,
@@ -836,55 +802,11 @@ class Post {
         });
       }
     });
-  
+
     modal.style.display = 'none';
     Post.deletePost(userId, postId);
   }
-  static saveLikes() {
-    const modal = document.getElementById('likesModal');
-    const postId = modal.dataset.postId;
-    const userId = modal.dataset.userId;
-    const checkboxes = document.querySelectorAll('#commenters-list input[type="checkbox"]:checked');
-  
 
-  
-    // Check if the only commenter is the user themselves or if there are no comments
-    const hasOtherComments = Array.from(checkboxes).some(checkbox => checkbox.value !== auth.currentUser.uid);
-  
-
-    // Process likes for other users' comments
-    checkboxes.forEach((checkbox) => {
-      const likedUserId = checkbox.value;
-      if (likedUserId !== auth.currentUser.uid) {
-        const likesRef = ref(db, `users/${likedUserId}/likes`);
-        const numLikesRef = ref(db, `users/${likedUserId}/numLikes`);
-  
-        get(numLikesRef).then((snapshot) => {
-          let currentNumLikes = snapshot.val() || 0;
-  
-          const newNumLikes = currentNumLikes + 1;
-  
-          push(likesRef, {
-            postId: postId,
-            likedBy: userId,
-            timestamp: Date.now(),
-          }).then(() => {
-            set(numLikesRef, newNumLikes).catch((error) => {
-              console.error("Error updating number of likes:", error);
-            });
-          }).catch((error) => {
-            console.error("Error saving like details:", error);
-          });
-        }).catch((error) => {
-          console.error("Error fetching number of likes:", error);
-        });
-      }
-    });
-  
-    modal.style.display = 'none';
-    Post.deletePost(userId, postId);
-  }
-  
   static closeModal() {
     const modal = document.getElementById('likesModal');
     modal.style.display = 'none';
