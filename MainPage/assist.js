@@ -739,7 +739,7 @@ static addPostToDOM(postId, title, content, image, userId, currentUserId) {
       if (snapshot.exists()) {
         const postData = snapshot.val();
 
-        // Remove the original post
+        // Remove the original post from the DOM
         Post.deletePost(userId, postId);
 
         // Add a new post with the same data
@@ -754,6 +754,8 @@ static addPostToDOM(postId, title, content, image, userId, currentUserId) {
         })
         .then(() => {
           alert("Post raised successfully");
+          // Add the new post to the DOM
+          Post.addPostToDOM(newPostId, postData.title, postData.content, postData.image, userId, userId);
         })
         .catch((error) => {
           console.error("Error raising post:", error);
@@ -764,7 +766,8 @@ static addPostToDOM(postId, title, content, image, userId, currentUserId) {
     }).catch((error) => {
       console.error("Error fetching post data:", error);
     });
-  }
+}
+
 
   static saveComment(userId, postId, commentContent) {
     const commentId = Date.now().toString();
@@ -873,23 +876,23 @@ static addPostToDOM(postId, title, content, image, userId, currentUserId) {
   
     get(commentsRef).then((snapshot) => {
       if (snapshot.exists()) {
-        let hasOtherComments = false;
         snapshot.forEach((childSnapshot) => {
           const comment = childSnapshot.val();
           if (comment.userId !== auth.currentUser.uid) {
-            uniqueUserIds.add(comment.userId);
-            hasOtherComments = true;
-            const commenterDiv = document.createElement('div');
-            commenterDiv.innerHTML = `
-              <label>
-                <input type="checkbox" value="${comment.userId}">${comment.fullName}
-              </label>
-            `;
-            commentersList.appendChild(commenterDiv);
+            if (!uniqueUserIds.has(comment.userId)) {
+              uniqueUserIds.add(comment.userId);
+              const commenterDiv = document.createElement('div');
+              commenterDiv.innerHTML = `
+                <label>
+                  <input type="checkbox" value="${comment.userId}">${comment.fullName}
+                </label>
+              `;
+              commentersList.appendChild(commenterDiv);
+            }
           }
         });
   
-        if (!hasOtherComments) {
+        if (uniqueUserIds.size === 0) {
           Post.deletePost(userId, postId);
           return;
         }
