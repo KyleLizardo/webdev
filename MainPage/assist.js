@@ -915,24 +915,24 @@ class Post {
       }
     });
   }
-  static notifyUser(userId, postId, commenterName, userInfo) {
+  static notifyUser(postOwnerId, postId, commenterName, commenterId) {
     // Notify post owner if a new comment is added to their post
-    get(ref(db, `users/${userId}/posts/${postId}`)).then((snapshot) => {
+    get(ref(db, `users/${postOwnerId}/posts/${postId}`)).then((snapshot) => {
       if (snapshot.exists()) {
         const postData = snapshot.val();
         const postTitle = postData.title;
 
-        if (userId !== auth.currentUser.uid) {
+        if (postOwnerId !== commenterId) {
           showNotification(`${commenterName} commented on your post: ${postTitle}`, postId);
         }
 
         // Notify other commenters on the post
-        get(ref(db, `users/${userId}/posts/${postId}/comments`)).then((commentsSnapshot) => {
+        get(ref(db, `users/${postOwnerId}/posts/${postId}/comments`)).then((commentsSnapshot) => {
           if (commentsSnapshot.exists()) {
             commentsSnapshot.forEach((commentSnapshot) => {
               const commentData = commentSnapshot.val();
-              if (commentData.userId !== auth.currentUser.uid && commentData.userId !== userId) {
-                showNotification(`${commenterName} commented on ${postTitle}`, postId);
+              if (commentData.userId !== commenterId && commentData.userId !== postOwnerId) {
+                showNotification(`${commenterName} commented on a post you commented on: ${postTitle}`, postId);
               }
             });
           }
@@ -944,7 +944,6 @@ class Post {
       console.error("Error fetching post data for notification:", error);
     });
   }
-
   static displayComment(comment, commentsSection) {
     const commentContainer = document.createElement('div');
     commentContainer.classList.add('comment-container');
