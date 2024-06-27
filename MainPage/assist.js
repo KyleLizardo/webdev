@@ -875,28 +875,28 @@ class Post {
     });
   }
 
-  static saveComment(userId, postId, commentContent) {
+  static saveComment(postOwnerId, postId, commentContent) {
     const commentId = Date.now().toString();
-  
+
     onAuthStateChanged(auth, (user) => {
       if (user) {
         get(ref(db, `users/${user.uid}`)).then((snapshot) => {
           if (snapshot.exists()) {
             const userInfo = snapshot.val();
             const fullName = `${userInfo.firstName} ${userInfo.lastName}`;
-  
+
             const commentData = {
               userId: user.uid,
               content: commentContent,
               fullName: fullName,
               timestamp: Date.now()
             };
-  
-            set(ref(db, `users/${userId}/posts/${postId}/comments/${commentId}`), commentData)
+
+            set(ref(db, `users/${postOwnerId}/posts/${postId}/comments/${commentId}`), commentData)
               .then(() => {
                 console.log("Comment saved successfully");
-                Post.notifyUser(userId, postId, fullName, userInfo);
-                
+                Post.notifyUsers(postOwnerId, postId, fullName, user.uid);
+
                 // Display the comment immediately
                 const commentsSection = document.getElementById(`post-${postId}`).querySelector('.comments-section');
                 if (commentsSection) {
@@ -915,7 +915,8 @@ class Post {
       }
     });
   }
-  static notifyUser(postOwnerId, postId, commenterName, commenterId) {
+
+  static notifyUsers(postOwnerId, postId, commenterName, commenterId) {
     // Notify post owner if a new comment is added to their post
     get(ref(db, `users/${postOwnerId}/posts/${postId}`)).then((snapshot) => {
       if (snapshot.exists()) {
@@ -923,7 +924,13 @@ class Post {
         const postTitle = postData.title;
 
         if (postOwnerId !== commenterId) {
-          showNotification(`${commenterName} commented on your post: ${postTitle}`, postId);
+          // Notify post owner
+          const notificationId = Date.now().toString();
+          set(ref(db, `users/${postOwnerId}/notifications/${notificationId}`), {
+            message: `${commenterName} commented on your post: ${postTitle}`,
+            postId: postId,
+            timestamp: Date.now()
+          });
         }
 
         // Notify other commenters on the post
@@ -932,7 +939,12 @@ class Post {
             commentsSnapshot.forEach((commentSnapshot) => {
               const commentData = commentSnapshot.val();
               if (commentData.userId !== commenterId && commentData.userId !== postOwnerId) {
-                showNotification(`${commenterName} commented on a post you commented on: ${postTitle}`, postId);
+                const notificationId = Date.now().toString();
+                set(ref(db, `users/${commentData.userId}/notifications/${notificationId}`), {
+                  message: `${commenterName} also commented on the post: ${postTitle}`,
+                  postId: postId,
+                  timestamp: Date.now()
+                });
               }
             });
           }
@@ -944,6 +956,7 @@ class Post {
       console.error("Error fetching post data for notification:", error);
     });
   }
+
   static displayComment(comment, commentsSection) {
     const commentContainer = document.createElement('div');
     commentContainer.classList.add('comment-container');
