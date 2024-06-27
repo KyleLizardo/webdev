@@ -119,6 +119,50 @@ ul li a:hover {
     transform: translateY(-50%); /* Adjust for vertical centering */
 }
 
+#notification-icon{
+    cursor: pointer;
+
+}
+
+/* Add this to your existing CSS */
+.notification-container {
+    position: fixed;
+    bottom: 1rem;
+    right: 1rem;
+    width: 300px;
+    background-color: #fff;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    padding: 1rem;
+    border-radius: 5px;
+    z-index: 1000;
+}
+
+.notification {
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.5rem;
+    border-bottom: 1px solid #eee;
+}
+
+.notification:last-child {
+    border-bottom: none;
+}
+
+.notification .close-btn {
+    background: none;
+    border: none;
+    font-size: 1.2rem;
+    cursor: pointer;
+    color: #888;
+}
+
+.notification .close-btn:hover {
+    color: #333;
+}
+
+
 section {
     min-height: 100vh;
     background-color: var(--extra-light);
