@@ -111,40 +111,40 @@ class Post {
     Post.renderPosts(allPosts, user.uid, filter);
   }
 
-  static setupListeners() {
+  static setupListeners(user) {
     const usersRef = ref(db, 'users');
-  
-    onChildAdded(usersRef, (snapshot) => {
+    
+    onChildAdded(usersRef, debounce((snapshot) => {
       const userId = snapshot.key;
       const postsRef = ref(db, `users/${userId}/posts`);
-  
-      onChildAdded(postsRef, (snapshot) => {
+      
+      onChildAdded(postsRef, debounce((snapshot) => {
         const post = snapshot.val();
         const postId = snapshot.key;
         if (!addedPostIds.has(postId)) {
           addedPostIds.add(postId);
           allPosts.push({ userId, postId, post });
-          Post.renderPosts(allPosts, auth.currentUser.uid); // Ensure it always renders the latest posts
+          Post.renderPosts(allPosts, user.uid);
         }
-      });
-  
-      onChildRemoved(postsRef, (snapshot) => {
+      }, 300));
+
+      onChildRemoved(postsRef, debounce((snapshot) => {
         const postId = snapshot.key;
         addedPostIds.delete(postId);
         allPosts = allPosts.filter(post => post.postId !== postId);
-        Post.renderPosts(allPosts, auth.currentUser.uid);
-      });
-  
-      onChildChanged(postsRef, (snapshot) => {
+        Post.renderPosts(allPosts, user.uid);
+      }, 300));
+
+      onChildChanged(postsRef, debounce((snapshot) => {
         const post = snapshot.val();
         const postId = snapshot.key;
         const postIndex = allPosts.findIndex(post => post.postId === postId);
         if (postIndex !== -1) {
           allPosts[postIndex].post = post;
-          Post.renderPosts(allPosts, auth.currentUser.uid);
+          Post.renderPosts(allPosts, user.uid);
         }
-      });
-    });
+      }, 300));
+    }, 300));
   }
 
   static renderPosts(posts, currentUserId, filter) {
@@ -212,12 +212,12 @@ class Post {
   static addPost() {
     const reqTitle = document.getElementById('title-input').value;
     const reqTxt = document.getElementById('request-textarea').value;
-  
+
     if (!reqTitle.trim() || !reqTxt.trim()) {
       alert("Title and content are required.");
       return;
     }
-  
+
     onAuthStateChanged(auth, (user) => {
       if (user) {
         Post.savePost(user.uid);
@@ -225,8 +225,8 @@ class Post {
         console.log("User is not logged in");
       }
     });
-  }  
-  
+  }
+
   static savePost(userId) {
     const reqTitle = document.getElementById('title-input').value;
     const reqTxt = document.getElementById('request-textarea').value;
@@ -1164,12 +1164,6 @@ static saveEditedPost(postId, newTitle, newContent, newImage, userId) {
 document.addEventListener('DOMContentLoaded', () => {
   Auth.init();
   Post.init();
-
-  onAuthStateChanged(auth, (user) => {
-    if (user) {
-      Post.setupListeners(); // Add this line to set up listeners when the user is authenticated
-    }
-  });
 
   document.getElementById('request-textarea').addEventListener('input', function () {
     this.style.height = 'auto';
