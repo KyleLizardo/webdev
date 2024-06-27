@@ -92,6 +92,89 @@ function navigateToPost(postId) {
   }
 }
 
+// Setup real-time listeners for notifications
+function setupNotificationListeners() {
+  onAuthStateChanged(auth, (user) => {
+    if (user) {
+      const notificationsRef = ref(db, `users/${user.uid}/notifications`);
+
+      onChildAdded(notificationsRef, (snapshot) => {
+        const notification = snapshot.val();
+        showNotification(notification.message, notification.postId);
+      });
+    }
+  });
+}
+
+function showNotification(message, postId) {
+  const notificationContainer = document.getElementById('notification-container');
+  const notification = document.createElement('div');
+  notification.classList.add('notification');
+  notification.setAttribute('data-post-id', postId);
+  notification.innerHTML = `
+    <span>${message}</span>
+    <button class="close-btn" onclick="this.parentElement.style.display='none';">&times;</button>
+  `;
+  notificationContainer.appendChild(notification);
+  notificationContainer.style.display = 'block';
+
+  // Add click event listener to navigate to the specific post
+  notification.addEventListener('click', function () {
+    navigateToPost(postId);
+  });
+
+  // Remove the notification after 5 seconds
+  setTimeout(() => {
+    notification.style.display = 'none';
+  }, 5000);
+}
+
+// Call setupNotificationListeners when the app initializes
+setupNotificationListeners();
+
+function setupPostListeners() {
+  const usersRef = ref(db, 'users');
+
+  onAuthStateChanged(auth, (user) => {
+    if (user) {
+      onChildAdded(usersRef, (snapshot) => {
+        const userId = snapshot.key;
+        const postsRef = ref(db, `users/${userId}/posts`);
+
+        onChildAdded(postsRef, (snapshot) => {
+          const post = snapshot.val();
+          const postId = snapshot.key;
+          if (!addedPostIds.has(postId)) {
+            addedPostIds.add(postId);
+            allPosts.push({ userId, postId, post });
+            Post.renderPosts(allPosts, user.uid);
+          }
+        });
+
+        onChildRemoved(postsRef, (snapshot) => {
+          const postId = snapshot.key;
+          addedPostIds.delete(postId);
+          allPosts = allPosts.filter(post => post.postId !== postId);
+          Post.renderPosts(allPosts, user.uid);
+        });
+
+        onChildChanged(postsRef, (snapshot) => {
+          const post = snapshot.val();
+          const postId = snapshot.key;
+          const postIndex = allPosts.findIndex(post => post.postId === postId);
+          if (postIndex !== -1) {
+            allPosts[postIndex].post = post;
+            Post.renderPosts(allPosts, user.uid);
+          }
+        });
+      });
+    }
+  });
+}
+
+// Call setupPostListeners when the app initializes
+setupPostListeners();
+
 
 // Post class for handling post-related functionality
 class Post {
@@ -922,7 +1005,7 @@ class Post {
       if (snapshot.exists()) {
         const postData = snapshot.val();
         const postTitle = postData.title;
-
+  
         if (postOwnerId !== commenterId) {
           // Notify post owner
           const notificationId = Date.now().toString();
@@ -932,7 +1015,7 @@ class Post {
             timestamp: Date.now()
           });
         }
-
+  
         // Notify other commenters on the post
         get(ref(db, `users/${postOwnerId}/posts/${postId}/comments`)).then((commentsSnapshot) => {
           if (commentsSnapshot.exists()) {
@@ -1122,6 +1205,8 @@ class Post {
 document.addEventListener('DOMContentLoaded', () => {
   Auth.init();
   Post.init();
+  setupPostListeners();
+  setupNotificationListeners();
 
   // Toggle notification container visibility on notification icon click
   const notificationIcon = document.getElementById('notification-icon');
