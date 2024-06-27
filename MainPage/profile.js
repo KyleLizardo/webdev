@@ -1,6 +1,6 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.1/firebase-app.js";
 import { getDatabase, ref, get, update } from "https://www.gstatic.com/firebasejs/10.12.1/firebase-database.js";
-import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.1/firebase-auth.js";
+import { getAuth, onAuthStateChanged, updatePassword, signOut } from "https://www.gstatic.com/firebasejs/10.12.1/firebase-auth.js";
 
 // Firebase configuration object
 const firebaseConfig = {
@@ -31,6 +31,28 @@ const BrgyInp = document.getElementById('brgyInp');
 const MunicipalityInp = document.getElementById('municipalityInp');
 const ShowPasswordCheck = document.getElementById('showPasswordCheck');
 
+class Auth {
+  static init() {
+    onAuthStateChanged(auth, (user) => {
+      if (!user) {
+        window.location.href = '../loginpage/login.html';
+      } else {
+        loadUserData(user);
+      }
+    });
+
+    document.querySelector('.signoutbtn').addEventListener('click', Auth.signOut);
+  }
+
+  static signOut() {
+    signOut(auth).then(() => {
+      window.location.href = '../loginpage/login.html';
+    }).catch((error) => {
+      console.error('Error signing out:', error);
+    });
+  }
+}
+
 // Function to load the user data
 const loadUserData = user => {
     const userRef = ref(db, 'users/' + user.uid);
@@ -60,8 +82,7 @@ const updateUserProfile = evt => {
 
     onAuthStateChanged(auth, user => {
         if (user) {
-            const userRef = ref(db, 'users/' + user.uid);
-            update(userRef, {
+            const updates = {
                 firstName: FnameInp.value,
                 lastName: LnameInp.value,
                 birthDate: BdateInp.value,
@@ -70,12 +91,36 @@ const updateUserProfile = evt => {
                 street: StreetInp.value,
                 brgy: BrgyInp.value,
                 municipality: MunicipalityInp.value
-            }).then(() => {
-                alert('Profile updated successfully!');
-            }).catch(error => {
-                console.error('Error updating profile: ', error);
-                alert('Error updating profile: ' + error.message);
-            });
+            };
+
+            const password = PassInp.value;
+            const confirmPassword = ConfirmPassInp.value;
+
+            const updateProfile = () => {
+                const userRef = ref(db, 'users/' + user.uid);
+                update(userRef, updates).then(() => {
+                    alert('Profile updated successfully!');
+                }).catch(error => {
+                    console.error('Error updating profile: ', error);
+                    alert('Error updating profile: ' + error.message);
+                });
+            };
+
+            if (password && confirmPassword) {
+                if (password === confirmPassword) {
+                    updatePassword(user, password).then(() => {
+                        alert('Password updated successfully!');
+                        updateProfile();
+                    }).catch(error => {
+                        console.error('Error updating password: ', error);
+                        alert('Error updating password: ' + error.message);
+                    });
+                } else {
+                    alert('Passwords do not match!');
+                }
+            } else {
+                updateProfile();
+            }
         }
     });
 };
@@ -91,11 +136,5 @@ ShowPasswordCheck.addEventListener('change', () => {
     ConfirmPassInp.type = type;
 });
 
-// Load the user data on auth state change
-onAuthStateChanged(auth, user => {
-    if (user) {
-        loadUserData(user);
-    } else {
-        window.location.href = '../loginpage/login.html'; // Redirect to login page if not logged in
-    }
-});
+// Initialize authentication and user data loading
+Auth.init();

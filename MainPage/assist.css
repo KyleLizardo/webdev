@@ -25,6 +25,7 @@ a {
 }
 
 body {
+    background-color: #f5f5f5;
     font-family: 'Poppins', sans-serif;
     padding-top: 73px;
     /* Adjust this value to match the height of your nav */
@@ -135,7 +136,7 @@ section {
     border: 0.5px solid transparent;
     border-radius: 10px;
     background-color: #dfdfdfdd;
-    color: #0e0e0ef8;
+    color: #0e0e0eb6;
     font-weight: 10000;
     font-size: 1.5rem;
     line-height: 1.4;
@@ -329,6 +330,7 @@ select {
     color: var(--text-dark);
     font-size: 12pt;
     margin-left: 1rem;
+    margin-bottom: 2px;
 }
 
 
@@ -374,6 +376,24 @@ select {
     cursor: pointer;
 }
 
+.comment-btn:hover{
+  color: var(--primary-color);  
+}
+
+.delete-comment-btn {
+    position: absolute;
+    top: 10px; /* Adjust as needed */
+    right: 10px; /* Adjust as needed */
+    background-color: transparent;
+    border: none;
+    color: #f44336; /* Red color */
+    cursor: pointer;
+    font-size: 16px;
+  }
+  
+  .delete-comment-btn:hover {
+    color: #d32f2f; /* Darker red on hover */
+  }
 .outer-post {
     display: flex;
     flex-direction: column;
@@ -437,6 +457,95 @@ select {
 
 }
 
+.title-edit,
+.content-edit {
+    font-family: sans-serif;
+    border: 0.5px solid transparent;
+    border-radius: 10px;
+    background-color: #dfdfdfdd;
+    color: #0e0e0ee3;
+    font-weight: 10000;
+    line-height: 1.4;
+    width: 100%;
+
+}
+
+.content-edit {
+    padding: 1rem 3.5rem 1rem 1rem;
+    outline: none;
+    font-family: sans-serif;
+    transition: all 0.2s;
+    font-size: 1rem;
+    min-height: 100px;
+    max-height: 500px;
+    overflow-y: auto; /* Ensure overflow is handled */
+    resize: vertical; /* Allow vertical resizing */
+  }
+
+.title-edit {
+    padding: 8px;
+    font-size: 1.2em; 
+    font-weight: bolder;
+    margin-bottom: 1rem;
+
+    outline: none;
+    font-family: sans-serif;
+    height: 2rem;
+    transition: all 0.2s; 
+}
+
+.comment-submit {
+    background-color: #328fe6; /* Green background */
+    color: white; /* White text */
+    border: none; /* No border */
+    padding: 5px; /* Some padding */
+    text-align: center; /* Centered text */
+    text-decoration: none; /* No underline */
+    display: inline-block; /* Make the button an inline block */
+    font-size: 16px; /* Increase font size */
+    margin: 10px 0; /* Some margin */
+    cursor: pointer; /* Pointer/hand icon on hover */
+    border-radius: 5px; /* Rounded corners */
+    transition: background-color 0.3s ease; /* Smooth transition for hover effect */
+  }
+  
+  .comment-submit:hover {
+    background-color: #2570b6; /* Darker green on hover */
+  }
+
+.comments-section{
+    padding: 1rem;    
+   border-top: solid 1px #212121;
+
+}
+
+.comment {
+    display: flex;
+    flex-direction: column; /* Ensures full name and comment are on separate lines */
+    gap: 0.5rem;
+    margin-bottom: 1rem; /* Separate individual comments */
+  }
+  
+  .comment-container {
+    position: relative; 
+    border-bottom: solid 2px rgba(26, 58, 202, 0.685);   
+    border-radius: 1rem;
+    background-color: #f5f5f5;
+    padding: 12px;
+    border-radius: 5px; /* Optional: adds rounded corners */
+    margin-bottom: 1rem; /* Space between comments */
+    
+  }
+
+.comment-input{
+    box-shadow: rgba(0, 0, 0, 0.02) 0px 1px 3px 0px, rgba(27, 31, 35, 0.15) 0px 0px 0px 1px;  
+border: none;    
+border-radius: 4px;
+resize: none;
+padding: 5px;
+background-color: #e4e4e4dd;
+  }
+
 /* Modal styles */
 .modal {
     display: none;
@@ -459,6 +568,27 @@ select {
     border: 1px solid #888;
     width: 80%;
 }
+
+
+.commenter-item {
+    margin-bottom: 10px; /* Space between items */
+  }
+  
+  .commenter-item label {
+    display: flex;
+    align-items: center;
+    gap: 5px; /* Gap between checkbox and label text */
+  }
+  
+  #commenters-list {
+    padding: 10px; /* Optional: add padding around the entire list */
+  }
+
+  #saveLikesBtn{
+  padding: 4px 10px;
+  
+      
+  }
 
 .close {
     color: #aaa;
