@@ -106,30 +106,6 @@ function setupNotificationListeners() {
   });
 }
 
-function showNotification(message, postId) {
-  const notificationContainer = document.getElementById('notification-container');
-  const notification = document.createElement('div');
-  notification.classList.add('notification');
-  notification.setAttribute('data-post-id', postId);
-  notification.innerHTML = `
-    <span>${message}</span>
-    <button class="close-btn" onclick="this.parentElement.style.display='none';">&times;</button>
-  `;
-  notificationContainer.appendChild(notification);
-  notificationContainer.style.display = 'block';
-
-  // Add click event listener to navigate to the specific post
-  notification.addEventListener('click', function () {
-    navigateToPost(postId);
-  });
-
-  // Remove the notification after 5 seconds
-  setTimeout(() => {
-    notification.style.display = 'none';
-  }, 5000);
-}
-
-// Call setupNotificationListeners when the app initializes
 setupNotificationListeners();
 
 function setupPostListeners() {
@@ -172,9 +148,7 @@ function setupPostListeners() {
   });
 }
 
-// Call setupPostListeners when the app initializes
 setupPostListeners();
-
 
 // Post class for handling post-related functionality
 class Post {
@@ -189,9 +163,6 @@ class Post {
         Post.fetchAndDisplayPosts(user);
       }
     });
-
-    document.getElementById('saveLikesBtn').addEventListener('click', Post.saveLikes);
-    document.querySelector('.modal .close').addEventListener('click', Post.closeModal);
 
     document.getElementById('post-filter').addEventListener('change', (event) => {
       onAuthStateChanged(auth, (user) => {
@@ -228,42 +199,6 @@ class Post {
       }
     }
     Post.renderPosts(allPosts, user.uid, filter);
-  }
-
-  static setupListeners(user) {
-    const usersRef = ref(db, 'users');
-
-    onChildAdded(usersRef, debounce((snapshot) => {
-      const userId = snapshot.key;
-      const postsRef = ref(db, `users/${userId}/posts`);
-
-      onChildAdded(postsRef, debounce((snapshot) => {
-        const post = snapshot.val();
-        const postId = snapshot.key;
-        if (!addedPostIds.has(postId)) {
-          addedPostIds.add(postId);
-          allPosts.push({ userId, postId, post });
-          Post.renderPosts(allPosts, user.uid);
-        }
-      }, 300));
-
-      onChildRemoved(postsRef, debounce((snapshot) => {
-        const postId = snapshot.key;
-        addedPostIds.delete(postId);
-        allPosts = allPosts.filter(post => post.postId !== postId);
-        Post.renderPosts(allPosts, user.uid);
-      }, 300));
-
-      onChildChanged(postsRef, debounce((snapshot) => {
-        const post = snapshot.val();
-        const postId = snapshot.key;
-        const postIndex = allPosts.findIndex(post => post.postId === postId);
-        if (postIndex !== -1) {
-          allPosts[postIndex].post = post;
-          Post.renderPosts(allPosts, user.uid);
-        }
-      }, 300));
-    }, 300));
   }
 
   static renderPosts(posts, currentUserId, filter) {
