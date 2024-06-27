@@ -147,7 +147,8 @@ class Post {
     }, 300));
   }
 
-  static renderPosts(posts, currentUserId, filter) {
+
+  static renderPosts(posts, currentUserId, filter = 'all') {
     const postsContainer = document.getElementById('personal-container');
     postsContainer.innerHTML = '';
 
@@ -159,6 +160,7 @@ class Post {
       Post.addPostToDOM(postId, post.title, post.content, post.image, userId, currentUserId);
     });
   }
+
 
   static showPostElements() {
     document.getElementById('title-input').style.display = 'block';
