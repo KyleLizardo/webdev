@@ -67,18 +67,17 @@ class Post {
     onAuthStateChanged(auth, (user) => {
       if (user) {
         Post.fetchAndDisplayPosts(user);
+        Post.setupListeners(user); // Ensure listeners are set up when user is authenticated
       }
     });
 
     document.getElementById('saveLikesBtn').addEventListener('click', Post.saveLikes);
     document.querySelector('.modal .close').addEventListener('click', Post.closeModal);
 
-    // Add event listener for the filter select element inside the init method
     document.getElementById('post-filter').addEventListener('change', (event) => {
       onAuthStateChanged(auth, (user) => {
         if (user) {
           Post.fetchAndDisplayPosts(user, event.target.value);
-          Post.setupListeners(user);
         }
       });
     });
@@ -147,7 +146,6 @@ class Post {
     }, 300));
   }
 
-
   static renderPosts(posts, currentUserId, filter = 'all') {
     const postsContainer = document.getElementById('personal-container');
     postsContainer.innerHTML = '';
@@ -161,120 +159,159 @@ class Post {
     });
   }
 
-
-  static showPostElements() {
-    document.getElementById('title-input').style.display = 'block';
-    document.getElementById('close').style.display = 'block';
-    document.getElementById('post-btn').style.display = 'block';
-    document.getElementById('file').style.display = 'block';
-  }
-
-  static hidePostElements() {
-    document.getElementById('title-input').style.display = 'none';
-    document.getElementById('request-textarea').style.height = '6rem';
-    document.getElementById('close').style.display = 'none';
-    document.getElementById('file').style.display = 'none';
-    document.getElementById('post-btn').style.display = 'none';
-    document.getElementById('display-image').innerHTML = '';
-    document.getElementById('display-image').style.display = 'none';
-  }
-
-  static previewImage(event) {
-    const file = event.target.files[0];
-    const displayImage = document.getElementById('display-image');
-
-    if (file) {
-      const reader = new FileReader();
-      displayImage.style.display = 'block';
-
-      reader.onload = (e) => {
-        const imgElement = document.createElement('img');
-        imgElement.classList.add("image");
-        imgElement.src = e.target.result;
-        imgElement.style.maxWidth = '100%';
-
-        const removeButton = document.createElement('button');
-        removeButton.classList.add("remove-image");
-        removeButton.innerHTML = '<i class="ri-delete-bin-6-line"></i>';
-        removeButton.addEventListener('click', () => {
-          document.getElementById('firstimg').value = '';
-          displayImage.innerHTML = '';
-          displayImage.style.display = 'none';
-        });
-
-        displayImage.innerHTML = '';
-        displayImage.appendChild(imgElement);
-        displayImage.appendChild(removeButton);
-      };
-
-      reader.readAsDataURL(file);
-    }
-  }
-
-  static addPost() {
-    const reqTitle = document.getElementById('title-input').value;
-    const reqTxt = document.getElementById('request-textarea').value;
-
-    if (!reqTitle.trim() || !reqTxt.trim()) {
-      alert("Title and content are required.");
+  static addPostToDOM(postId, title, content, image, userId, currentUserId, createdAt) {
+    const prefixedPostId = `post-${postId}`;
+    if (document.getElementById(prefixedPostId)) {
+      // If the post already exists in the DOM, do not add it again
       return;
     }
 
-    onAuthStateChanged(auth, (user) => {
-      if (user) {
-        Post.savePost(user.uid);
+    get(ref(db, `users/${userId}`)).then((snapshot) => {
+      if (snapshot.exists()) {
+        const userInfo = snapshot.val();
+        const fullName = `${userInfo.firstName} ${userInfo.lastName}`;
+
+        const outerDiv = document.createElement("div");
+        outerDiv.classList.add("outer-post");
+        outerDiv.id = prefixedPostId;
+
+        const postDiv = document.createElement("div");
+        postDiv.classList.add("user-posts");
+
+        const titlePost = document.createElement("h1");
+        titlePost.innerText = title;
+
+        const newPost = document.createElement("p");
+        newPost.classList.add("content");
+        newPost.innerText = content;
+
+        const objContainer = document.createElement("div");
+        objContainer.classList.add("userid-container");
+
+        const postInfoContainer = document.createElement("div");
+        postInfoContainer.classList.add("post-info-container");
+
+        const dateElement = document.createElement("p");
+        const date = new Date(createdAt);
+        if (!isNaN(date)) {
+          dateElement.innerText = `Date: ${date.toLocaleDateString()}`;
+        } else {
+          dateElement.innerText = "Date: Invalid Date";
+        }
+        dateElement.classList.add("post-date"); // Add a class for styling if needed
+
+        const userIdElement = document.createElement("p");
+        userIdElement.innerText = `Posted by: ${fullName}`;
+
+        postInfoContainer.appendChild(dateElement);
+        postInfoContainer.appendChild(userIdElement);
+
+        objContainer.appendChild(postInfoContainer);
+
+        const commentButton = document.createElement("button");
+        commentButton.innerHTML = '<i class="ri-chat-4-line"></i>';
+        commentButton.classList.add("comment-btn");
+
+        postDiv.appendChild(titlePost);
+        postDiv.appendChild(newPost);
+        if (image) {
+          const postImg = document.createElement('img');
+          postImg.src = image;
+          postImg.style.maxWidth = '100%';
+          postDiv.appendChild(postImg);
+        }
+        postDiv.appendChild(objContainer);
+        outerDiv.appendChild(postDiv);
+        objContainer.appendChild(commentButton);
+
+        if (userId === currentUserId) {
+          const buttonGroup = document.createElement("div");
+          buttonGroup.classList.add("button-group");
+
+          const completeButton = document.createElement("button");
+          completeButton.innerText = "Complete";
+          completeButton.classList.add("complete-btn");
+
+          const raiseButton = document.createElement("button");
+          raiseButton.innerText = "Raise";
+          raiseButton.classList.add("raise-btn");
+
+          raiseButton.addEventListener('click', () => {
+            Post.raisePost(userId, postId);
+          });
+
+          completeButton.addEventListener('click', () => {
+            Post.showLikesModal(postId, userId);
+          });
+
+          const editButton = document.createElement("button");
+          editButton.innerText = "Edit";
+          editButton.classList.add("edit-btn");
+
+          editButton.addEventListener('click', () => {
+            if (editButton.innerText === "Edit") {
+              Post.editPost(prefixedPostId, title, content, image, userId, editButton, completeButton);
+              editButton.innerText = "Cancel";
+            } else {
+              Post.cancelEditPost(prefixedPostId, title, content, image, userId, currentUserId);
+              editButton.innerText = "Edit";
+            }
+          });
+          buttonGroup.appendChild(editButton);
+          buttonGroup.appendChild(raiseButton);
+          buttonGroup.appendChild(completeButton);
+          outerDiv.appendChild(buttonGroup);
+        }
+
+        document.getElementById('personal-container').prepend(outerDiv);
+
+        commentButton.addEventListener('click', () => {
+          let commentInput = postDiv.querySelector('.comment-input');
+          let submitButton = postDiv.querySelector('.comment-submit');
+          let commentsSection = postDiv.querySelector('.comments-section');
+
+          if (commentInput && submitButton) {
+            commentInput.remove();
+            submitButton.remove();
+            if (commentsSection) {
+              commentsSection.remove();
+            }
+          } else {
+            commentsSection = document.createElement('div');
+            commentsSection.classList.add('comments-section');
+            postDiv.appendChild(commentsSection);
+
+            commentInput = document.createElement('textarea');
+            commentInput.placeholder = 'Enter your comment...';
+            commentInput.classList.add('comment-input');
+
+            submitButton = document.createElement('button');
+            submitButton.innerText = 'Submit';
+            submitButton.classList.add('comment-submit');
+
+            submitButton.addEventListener('click', (event) => {
+              event.preventDefault();
+              const commentContent = commentInput.value.trim();
+              if (commentContent) {
+                Post.saveComment(userId, postId, commentContent, userInfo);
+                commentInput.value = '';
+              }
+            });
+
+            postDiv.appendChild(commentInput);
+            postDiv.appendChild(submitButton);
+
+            Post.loadComments(userId, postId, commentsSection);
+          }
+        });
       } else {
-        console.log("User is not logged in");
+        console.log("No user data available");
       }
+    }).catch((error) => {
+      console.error(error);
     });
   }
 
-  static savePost(userId) {
-    const reqTitle = document.getElementById('title-input').value;
-    const reqTxt = document.getElementById('request-textarea').value;
-    const imgElement = document.getElementById('display-image').querySelector('img');
-    const imgSrc = imgElement ? imgElement.src : '';
-
-    const postId = Date.now().toString();
-    const createdAt = new Date().toISOString(); // Ensure this is correctly formatted
-
-    get(ref(db, `users/${userId}`)).then((snapshot) => {
-        if (snapshot.exists()) {
-            const userInfo = snapshot.val();
-            set(ref(db, `users/${userId}/posts/${postId}`), {
-                userId: userId,
-                firstName: userInfo.firstName,
-                lastName: userInfo.lastName,
-                title: reqTitle,
-                content: reqTxt,
-                image: imgSrc,
-                createdAt: createdAt // Ensure this is correctly stored
-            })
-            .then(() => {
-                alert("Data Added Successfully");
-                document.getElementById('title-input').value = "";
-                document.getElementById('request-textarea').value = "";
-                if (imgElement) {
-                    imgElement.remove();
-                }
-
-                Post.hidePostElements();
-
-                // Add the post to DOM immediately
-                Post.addPostToDOM(postId, reqTitle, reqTxt, imgSrc, userId, userId, createdAt);
-
-            })
-            .catch((error) => {
-                console.error("Error saving post:", error);
-                alert("Unsuccessful: " + error.message);
-            });
-        } else {
-            console.log("No user data available");
-        }
-    }).catch((error) => {
-        console.error(error);
-    });
-}
 
 static addPostToDOM(postId, title, content, image, userId, currentUserId, createdAt) {
   const prefixedPostId = `post-${postId}`;
