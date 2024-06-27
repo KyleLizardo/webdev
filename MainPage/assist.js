@@ -877,25 +877,31 @@ class Post {
 
   static saveComment(userId, postId, commentContent) {
     const commentId = Date.now().toString();
-
+  
     onAuthStateChanged(auth, (user) => {
       if (user) {
         get(ref(db, `users/${user.uid}`)).then((snapshot) => {
           if (snapshot.exists()) {
             const userInfo = snapshot.val();
             const fullName = `${userInfo.firstName} ${userInfo.lastName}`;
-
+  
             const commentData = {
               userId: user.uid,
               content: commentContent,
               fullName: fullName,
               timestamp: Date.now()
             };
-
+  
             set(ref(db, `users/${userId}/posts/${postId}/comments/${commentId}`), commentData)
               .then(() => {
                 console.log("Comment saved successfully");
                 Post.notifyUser(userId, postId, fullName, userInfo);
+                
+                // Display the comment immediately
+                const commentsSection = document.getElementById(`post-${postId}`).querySelector('.comments-section');
+                if (commentsSection) {
+                  Post.displayComment({ ...commentData, postId, commentId }, commentsSection);
+                }
               })
               .catch((error) => {
                 console.error("Error saving comment:", error);
@@ -909,7 +915,6 @@ class Post {
       }
     });
   }
-
   static notifyUser(userId, postId, commenterName, userInfo) {
     // Notify post owner if a new comment is added to their post
     get(ref(db, `users/${userId}/posts/${postId}`)).then((snapshot) => {
