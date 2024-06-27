@@ -64,9 +64,11 @@ class Post {
     document.getElementById('firstimg').addEventListener('change', Post.previewImage);
     document.getElementById('post-btn').addEventListener("click", Post.addPost);
 
+
     onAuthStateChanged(auth, (user) => {
       if (user) {
         Post.fetchAndDisplayPosts(user);
+        Post.setupListeners(user); // Ensure listeners are set up
       }
     });
 
@@ -78,12 +80,10 @@ class Post {
       onAuthStateChanged(auth, (user) => {
         if (user) {
           Post.fetchAndDisplayPosts(user, event.target.value);
-          Post.setupListeners(user);
         }
       });
     });
   }
-
   static async fetchAndDisplayPosts(user, filter = 'all') {
     const usersRef = ref(db, 'users');
     allPosts = [];
@@ -111,14 +111,16 @@ class Post {
     Post.renderPosts(allPosts, user.uid, filter);
   }
 
+  
+
   static setupListeners(user) {
     const usersRef = ref(db, 'users');
-    
-    onChildAdded(usersRef, debounce((snapshot) => {
+
+    onChildAdded(usersRef, (snapshot) => {
       const userId = snapshot.key;
       const postsRef = ref(db, `users/${userId}/posts`);
-      
-      onChildAdded(postsRef, debounce((snapshot) => {
+
+      onChildAdded(postsRef, (snapshot) => {
         const post = snapshot.val();
         const postId = snapshot.key;
         if (!addedPostIds.has(postId)) {
@@ -126,16 +128,16 @@ class Post {
           allPosts.push({ userId, postId, post });
           Post.renderPosts(allPosts, user.uid);
         }
-      }, 300));
+      });
 
-      onChildRemoved(postsRef, debounce((snapshot) => {
+      onChildRemoved(postsRef, (snapshot) => {
         const postId = snapshot.key;
         addedPostIds.delete(postId);
         allPosts = allPosts.filter(post => post.postId !== postId);
         Post.renderPosts(allPosts, user.uid);
-      }, 300));
+      });
 
-      onChildChanged(postsRef, debounce((snapshot) => {
+      onChildChanged(postsRef, (snapshot) => {
         const post = snapshot.val();
         const postId = snapshot.key;
         const postIndex = allPosts.findIndex(post => post.postId === postId);
@@ -143,8 +145,8 @@ class Post {
           allPosts[postIndex].post = post;
           Post.renderPosts(allPosts, user.uid);
         }
-      }, 300));
-    }, 300));
+      });
+    });
   }
 
   static renderPosts(posts, currentUserId, filter) {
