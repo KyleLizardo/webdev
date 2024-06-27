@@ -116,11 +116,11 @@ class Post {
   static setupListeners(user) {
     const usersRef = ref(db, 'users');
 
-    onChildAdded(usersRef, (snapshot) => {
+    onChildAdded(usersRef, debounce((snapshot) => {
       const userId = snapshot.key;
       const postsRef = ref(db, `users/${userId}/posts`);
 
-      onChildAdded(postsRef, (snapshot) => {
+      onChildAdded(postsRef, debounce((snapshot) => {
         const post = snapshot.val();
         const postId = snapshot.key;
         if (!addedPostIds.has(postId)) {
@@ -128,16 +128,16 @@ class Post {
           allPosts.push({ userId, postId, post });
           Post.renderPosts(allPosts, user.uid);
         }
-      });
+      }, 300), 300);
 
-      onChildRemoved(postsRef, (snapshot) => {
+      onChildRemoved(postsRef, debounce((snapshot) => {
         const postId = snapshot.key;
         addedPostIds.delete(postId);
         allPosts = allPosts.filter(post => post.postId !== postId);
         Post.renderPosts(allPosts, user.uid);
-      });
+      }, 300), 300);
 
-      onChildChanged(postsRef, (snapshot) => {
+      onChildChanged(postsRef, debounce((snapshot) => {
         const post = snapshot.val();
         const postId = snapshot.key;
         const postIndex = allPosts.findIndex(post => post.postId === postId);
@@ -145,10 +145,9 @@ class Post {
           allPosts[postIndex].post = post;
           Post.renderPosts(allPosts, user.uid);
         }
-      });
-    });
+      }, 300), 300);
+    }, 300));
   }
-
   static renderPosts(posts, currentUserId, filter) {
     const postsContainer = document.getElementById('personal-container');
     postsContainer.innerHTML = '';
